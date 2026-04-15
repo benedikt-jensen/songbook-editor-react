@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-    base: env.VITE_BASE_URL || '/',
+    base: env.VITE_BASE_URL || '/songbook-editor-react',
     server: {
       proxy: {
         '/api': {
