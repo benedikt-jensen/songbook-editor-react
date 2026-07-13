@@ -4,7 +4,8 @@
   "main": "pdf-server.js",
   "scripts": {
     "build": "tsc",
-    "start": "npx puppeteer browsers install chrome && node src/server.js"
+    "start": "npx puppeteer browsers install chrome && node src/server.js",
+    "start:win": "cross-env PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" node src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +23,8 @@
     "@types/node": "^20.0.0",
     "cross-env": "^7.0.3",
     "typescript": "^5.2.2"
+  },
+  "allowScripts": {
+    "puppeteer@24.16.2": true
   }
 }

@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "cross-env VITE_BASE_URL=/songbook-editor-react npm run build",
     "deploy": "gh-pages -d dist",
     "pdf-server:build": "npm run --prefix ./src/pdf-server build",
     "pdf-server:start": "npm run --prefix ./src/pdf-server start"
@@ -24,7 +24,7 @@
     "express": "^5.1.0",
     "gh-pages": "^6.3.0",
     "html2pdf": "^0.0.11",
-    "html2pdf.js": "^0.10.3",
+    "html2pdf.js": "^0.14.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.9.6"
@@ -36,6 +36,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -43,5 +44,10 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0"
+  },
+  "allowScripts": {
+    "@swc/core@1.12.9": true,
+    "esbuild@0.28.1": true,
+    "core-js@3.49.0": true
   }
 }

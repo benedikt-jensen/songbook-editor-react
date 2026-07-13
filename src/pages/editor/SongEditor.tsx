@@ -154,7 +154,7 @@ const SongEditor: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', marginRight: "10px", width: "65vh", }}>
                 <h3>Preview</h3>
                 <div className="border-gray flex-fill">
-                    <iframe onLoad={() => updateSongText(text)} ref={previewIframeRef} src={`${BASE_URL}page-preview`} style={{width: '100%', height: '100%'}}></iframe>
+                    <iframe onLoad={() => updateSongText(text)} ref={previewIframeRef} src={`${BASE_URL}#/page-preview`} style={{width: '100%', height: '100%'}}></iframe>
                 </div>
             </div>
 
