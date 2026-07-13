@@ -1,10 +1,11 @@
 export async function downloadPdfFromHtml(html: string, fileName = 'document.pdf') {
     try {
-        let pdfServerUrl = import.meta.env.VITE_PDF_PRINTER_URL || "api";
+        let pdfServerUrl = import.meta.env.VITE_PDF_PRINTER_URL || "https://217-154-71-76.sslip.io";
         const response = await fetch(`${pdfServerUrl}/generate-pdf`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa('pdfuser:mNW5uHuL0J7gyPgw68QTBcFY'),
             },
             body: JSON.stringify({ html }),
         });
