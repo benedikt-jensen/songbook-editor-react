@@ -6,8 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const cors_1 = __importDefault(require("cors"));
+const allowedOrigins = [
+    "https://benedikt-jensen.github.io",
+    "http://localhost:5173",
+];
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({ origin: allowedOrigins }));
 app.use(express_1.default.json({ limit: "5mb" }));
 app.use(express_1.default.json());
 app.post("/generate-pdf", async (req, res) => {
@@ -43,6 +47,6 @@ app.post("/generate-pdf", async (req, res) => {
         res.status(500).send(`Failed to generate PDF:\n${err}`);
     }
 });
-app.listen(3001, '0.0.0.0', () => {
-    console.log("PDF server running on http://0.0.0.0:3001");
+app.listen(3001, '127.0.0.1', () => {
+    console.log("PDF server running on http://127.0.0.1:3001");
 });

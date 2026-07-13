@@ -5,7 +5,6 @@ export async function downloadPdfFromHtml(html: string, fileName = 'document.pdf
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Basic ' + btoa('pdfuser:mNW5uHuL0J7gyPgw68QTBcFY'),
             },
             body: JSON.stringify({ html }),
         });
