@@ -45,6 +45,6 @@ app.post("/generate-pdf", async (req, res) => {
     }
 });
 
-app.listen(3001, '0.0.0.0', () => {
-    console.log("PDF server running on http://0.0.0.0:3001");
+app.listen(3001, '127.0.0.1', () => {
+    console.log("PDF server running on http://127.0.0.1:3001");
 });
