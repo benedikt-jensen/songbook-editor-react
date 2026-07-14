@@ -96,7 +96,14 @@ const PrintPreview: React.FC<PrintPreviewProps> = ({text, currentPage, onPageCou
                 buffer.style.left = '0';
                 buffer.style.visibility = 'hidden';
                 buffer.style.pointerEvents = 'none';
-                mountPoint.appendChild(buffer);
+                // Paginate into a buffer attached to document.body, not mountPoint - mountPoint
+                // sits inside the scale-transformed preview container (see rescale() below), and
+                // paged.js measures column width via getBoundingClientRect(), which (unlike
+                // offsetWidth) reflects ancestor transforms. Laying out under a transformed
+                // ancestor left over from the previous run's rescale() bakes a wrongly-scaled
+                // column width into the page, so content silently overflows into invisible CSS
+                // columns instead of creating new pages.
+                document.body.appendChild(buffer);
 
                 const previewer = new Previewer();
                 try {
@@ -109,6 +116,7 @@ const PrintPreview: React.FC<PrintPreviewProps> = ({text, currentPage, onPageCou
                     buffer.style.left = '';
                     buffer.style.visibility = '';
                     buffer.style.pointerEvents = '';
+                    mountPoint.appendChild(buffer);
                     activeBufferRef.current = buffer;
                     previewerRef.current = previewer;
                     oldBuffer?.remove();

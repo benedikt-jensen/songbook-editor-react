@@ -105,15 +105,15 @@ const SongEditor: React.FC = () => {
                 <h3>Preview</h3>
                 <div className="border-gray preview-hover-container flex-fill d-flex flex-column" style={{ minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
                     <PrintPreview text={text} currentPage={currentPage} onPageCountChange={setPageCount} />
-                    <div className="preview-nav-overlay d-flex align-items-center justify-content-center gap-2 py-1 px-3">
+                    <div className="preview-nav-overlay text-nowrap d-flex align-items-center justify-content-center gap-2 py-1 px-1 rounded-5">
                         <button
-                            className="btn btn-sm btn-outline-primary"
+                            className="btn btn-sm btn-outline-primary rounded-5"
                             onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                             disabled={currentPage === 0}
                         >&laquo; Prev</button>
                         <span>Page {currentPage + 1} of {Math.max(pageCount, 1)}</span>
                         <button
-                            className="btn btn-sm btn-outline-primary"
+                            className="btn btn-sm btn-outline-primary rounded-5"
                             onClick={() => setCurrentPage(p => Math.min(pageCount - 1, p + 1))}
                             disabled={currentPage === pageCount - 1 || pageCount === 0}
                         >Next &raquo;</button>
