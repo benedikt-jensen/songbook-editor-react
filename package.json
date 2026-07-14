@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://lordbenedikt.github.io/songbook-editor-react",
+  "homepage": "https://benedikt-jensen.github.io/songbook-editor-react",
   "scripts": {
     "dev": "concurrently \"npm run pdf-server:start\" \"vite\"",
     "ui-only": "vite",

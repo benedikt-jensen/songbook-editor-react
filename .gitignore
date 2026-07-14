@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# pdf-server build output and local data
+src/pdf-server/dist
+src/pdf-server/*.sqlite
+src/pdf-server/*.sqlite3
+src/pdf-server/*.db
+
 # Keys/certs
 *.pem
 *.key
