@@ -67,61 +67,111 @@ function parseChordPro(chordProText: string): ParsedLine[] {
     return parsedLines;
 }
 
+interface ParagraphBlock {
+    badge?: { type: 'comment' | 'part'; value: string };
+    lines: ParsedLine[];
+}
+
+interface GroupedContent {
+    preamble: ParsedLine[];
+    blocks: ParagraphBlock[];
+    footnote?: string;
+}
+
+function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
+    const preamble: ParsedLine[] = [];
+    const blocks: ParagraphBlock[] = [];
+    let current: ParagraphBlock | null = null;
+    let footnote: string | undefined;
+    let pastPreamble = false;
+
+    const closeBlock = () => {
+        if (current && (current.lines.length > 0 || current.badge)) {
+            blocks.push(current);
+        }
+        current = null;
+    };
+
+    for (const line of parsedContent) {
+        if (line.type === 'directive' && line.key === 'footnote') {
+            footnote = line.value;
+            continue;
+        }
+        if (line.type === 'directive' && (line.key === 'title' || line.key === 'artist') && !pastPreamble) {
+            preamble.push(line);
+            continue;
+        }
+        pastPreamble = true;
+
+        if (line.type === 'br') {
+            closeBlock();
+            continue;
+        }
+
+        if (line.type === 'directive' && (line.key === 'comment' || line.key === 'part')) {
+            closeBlock();
+            current = { badge: { type: line.key as 'comment' | 'part', value: line.value! }, lines: [] };
+            continue;
+        }
+
+        if (!current) current = { lines: [] };
+        current.lines.push(line);
+    }
+    closeBlock();
+
+    return { preamble, blocks, footnote };
+}
+
+function renderLine(line: ParsedLine, key: number) {
+    if (line.type === 'lyrics' && line.segments) {
+        return (
+            <div key={key} className="lyric-line" style={{ display: 'flex', flexWrap: 'nowrap', lineHeight: 1.2, whiteSpace: 'pre' }}>
+                {line.segments.map((segment, segmentIndex) => (
+                    <LyricsSegment key={segmentIndex} chord={segment.chord} lyric={segment.lyric} />
+                ))}
+            </div>
+        );
+    }
+    if (line.type === 'directive') {
+        return <div key={key}>{line.value}</div>;
+    }
+    return null;
+}
+
 const ChordProPreview: React.FC<{ text: string }> = ({ text }) => {
     const parsedContent = parseChordPro(text);
     const songNumber = 47;
+    const { preamble, blocks, footnote } = groupIntoBlocks(parsedContent);
 
     return (
-        <div className="songbook-page">
-            <div className="songbook-page-frame">
-                <div className="song-number-badge">
-                    <div className="center">
-                        {songNumber}
-                    </div>
+        <>
+            <div className="song-number-badge">
+                <div className="center">
+                    {songNumber}
                 </div>
-                {parsedContent.map((line, lineIndex) => {
-                    if (line.type === 'br') {
-                        return <br key={lineIndex} />;
-                    }
-                    if (line.type === 'directive') {
-                        switch (line.key) {
-                            case 'title':
-                                return <h2 id="song-title" key={lineIndex}>{line.value}</h2>;
-                            case 'artist':
-                                return <h4 key={lineIndex}>{line.value}</h4>;
-                            case 'comment':
-                                return <div className="paragraph-badge" key={lineIndex}>
-                                    <div className="center">
-                                        {line.value}
-                                    </div>
-                                </div>;
-                            case 'part':
-                                return <div className="part-badge" key={lineIndex}>
-                                        <div className="center">
-                                            {line.value}
-                                        </div>
-                                    </div>;
-                            case 'footnote':
-                                return <div className="footnote" key={lineIndex}>
-                                        {line.value}
-                                    </div>;
-                            default:
-                                return <div key={lineIndex}>{line.value}</div>;
-                        }
-                    }
-                    if (line.type === 'lyrics' && line.segments) {
-                        return (
-                            <div key={lineIndex} style={{ display: 'flex', flexWrap: 'nowrap', lineHeight: 1.2, whiteSpace: 'pre' }}>
-                                {line.segments.map((segment, segmentIndex) => (
-                                    <LyricsSegment key={segmentIndex} chord={segment.chord} lyric={segment.lyric} />
-                                ))}
-                            </div>
-                        );
-                    }
-                    return null;
-                })}
             </div>
-        </div>
+            {preamble.map((line, lineIndex) => {
+                if (line.key === 'title') return <h2 id="song-title" key={lineIndex}>{line.value}</h2>;
+                if (line.key === 'artist') return <h4 key={lineIndex}>{line.value}</h4>;
+                return null;
+            })}
+            {blocks.map((block, blockIndex) => (
+                <div className="song-paragraph" key={blockIndex}>
+                    {block.badge?.type === 'comment' && (
+                        <div className="paragraph-badge">
+                            <div className="center">{block.badge.value}</div>
+                        </div>
+                    )}
+                    {block.badge?.type === 'part' && (
+                        <div className="part-badge">
+                            <div className="center">{block.badge.value}</div>
+                        </div>
+                    )}
+                    {block.lines.map((line, lineIndex) => renderLine(line, lineIndex))}
+                </div>
+            ))}
+            {footnote && <div className="footnote">{footnote}</div>}
+        </>
     );
 };
 

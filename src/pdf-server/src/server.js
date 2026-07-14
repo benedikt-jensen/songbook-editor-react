@@ -6,10 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const cors_1 = __importDefault(require("cors"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const allowedOrigins = [
     "https://benedikt-jensen.github.io",
     "http://localhost:5173",
 ];
+const pagedjsRoot = path_1.default.dirname(path_1.default.dirname(require.resolve("pagedjs")));
+const pagedPolyfillJs = fs_1.default.readFileSync(path_1.default.join(pagedjsRoot, "dist", "paged.polyfill.js"), "utf-8");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: allowedOrigins }));
 app.use(express_1.default.json({ limit: "5mb" }));
@@ -30,12 +34,23 @@ app.post("/generate-pdf", async (req, res) => {
         // Load HTML content directly
         await page.setContent(html, { waitUntil: "networkidle0" });
         await page.evaluateHandle("document.fonts.ready");
+        // Paginate the content with paged.js before printing, so the PDF
+        // matches the live preview (repeating page frame, multi-page flow).
+        await page.evaluate(() => {
+            window.PagedConfig = {
+                auto: true,
+                after: () => {
+                    window.__pagedDone = true;
+                },
+            };
+        });
+        await page.addScriptTag({ content: pagedPolyfillJs });
+        await page.waitForFunction(() => window.__pagedDone === true, { timeout: 30000 });
         await page.emulateMediaType("screen");
-        // Generate PDF with backgrounds
+        // Generate PDF with backgrounds, using the page size paged.js set via @page
         const pdfBuffer = await page.pdf({
-            format: "A4",
             printBackground: true,
-            scale: 1
+            preferCSSPageSize: true,
         });
         await browser.close();
         // Send PDF back to client

@@ -14,6 +14,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "pagedjs": "^0.4.3",
     "pdf-server": "file:",
     "puppeteer": "^24.16.2"
   },
