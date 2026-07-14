@@ -63,8 +63,8 @@
 @page {
   size: A4;
   margin: 8mm;
-  border: 0.2em solid var(--primary-color);
-  padding: 6mm 45mm;
+  border: 0.15em solid var(--primary-color);
+  padding: 4mm 55mm;
 }
 
 .pagedjs_page_content {
@@ -101,11 +101,12 @@
 .paragraph-badge {
   position: absolute;
   top: 0.2em;
-  left: 20%;
+  left: -1em;
+  transform: translateX(-100%);
   display: block;
   width: 1.8em;
   height: 1.8em;
-  font-size: 1em;
+  font-size: 1.2em;
   font-style: normal;
   font-weight: bold;
   border-radius: 50%;
@@ -114,6 +115,7 @@
 }
 
 .part-badge {
+  font-size: 1.2em;
   display: inline-block;
   margin-inline: 1em;
   margin-block: 0.7em;

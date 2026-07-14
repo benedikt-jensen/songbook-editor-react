@@ -76,6 +76,7 @@ interface GroupedContent {
     preamble: ParsedLine[];
     blocks: ParagraphBlock[];
     footnote?: string;
+    gapAfterPreamble: boolean;
 }
 
 function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
@@ -84,6 +85,7 @@ function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     let current: ParagraphBlock | null = null;
     let footnote: string | undefined;
     let pastPreamble = false;
+    let gapAfterPreamble = false;
 
     const closeBlock = () => {
         if (current && (current.lines.length > 0 || current.badge)) {
@@ -104,6 +106,13 @@ function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
         pastPreamble = true;
 
         if (line.type === 'br') {
+            // A blank line before any paragraph content has started is the gap
+            // between the title/artist heading and the first verse - preserve it
+            // as a visible break, since later blank lines between paragraphs are
+            // already spaced via .song-paragraph's margin-bottom instead.
+            if (blocks.length === 0 && !current) {
+                gapAfterPreamble = true;
+            }
             closeBlock();
             continue;
         }
@@ -119,7 +128,7 @@ function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     }
     closeBlock();
 
-    return { preamble, blocks, footnote };
+    return { preamble, blocks, footnote, gapAfterPreamble };
 }
 
 function renderLine(line: ParsedLine, key: number) {
@@ -141,7 +150,7 @@ function renderLine(line: ParsedLine, key: number) {
 const ChordProPreview: React.FC<{ text: string }> = ({ text }) => {
     const parsedContent = parseChordPro(text);
     const songNumber = 47;
-    const { preamble, blocks, footnote } = groupIntoBlocks(parsedContent);
+    const { preamble, blocks, footnote, gapAfterPreamble } = groupIntoBlocks(parsedContent);
 
     return (
         <>
@@ -155,20 +164,25 @@ const ChordProPreview: React.FC<{ text: string }> = ({ text }) => {
                 if (line.key === 'artist') return <h4 key={lineIndex}>{line.value}</h4>;
                 return null;
             })}
+            {gapAfterPreamble && <br/>}
             {blocks.map((block, blockIndex) => (
-                <div className="song-paragraph" key={blockIndex}>
-                    {block.badge?.type === 'comment' && (
-                        <div className="paragraph-badge">
-                            <div className="center">{block.badge.value}</div>
-                        </div>
-                    )}
+                <React.Fragment key={blockIndex}>
                     {block.badge?.type === 'part' && (
                         <div className="part-badge">
                             <div className="center">{block.badge.value}</div>
                         </div>
                     )}
-                    {block.lines.map((line, lineIndex) => renderLine(line, lineIndex))}
-                </div>
+                    {(block.lines.length > 0 || block.badge?.type === 'comment') && (
+                        <div className="song-paragraph">
+                            {block.badge?.type === 'comment' && (
+                                <div className="paragraph-badge">
+                                    <div className="center">{block.badge.value}</div>
+                                </div>
+                            )}
+                            {block.lines.map((line, lineIndex) => renderLine(line, lineIndex))}
+                        </div>
+                    )}
+                </React.Fragment>
             ))}
             {footnote && <div className="footnote">{footnote}</div>}
         </>
