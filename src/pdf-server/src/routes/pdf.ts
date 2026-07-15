@@ -23,8 +23,13 @@ router.post("/generate-pdf", async (req, res) => {
         });
         const page = await browser.newPage();
 
-        // Load HTML content directly
-        await page.setContent(html, { waitUntil: "networkidle0" });
+        // Load HTML content directly. setContent()'s own waitUntil no longer
+        // accepts "networkidle0" in newer Puppeteer versions (it's now
+        // load/domcontentloaded only), so wait for network idle as a
+        // separate, still-supported step - same "0 connections for 500ms"
+        // semantics, just via a dedicated API instead of a waitUntil value.
+        await page.setContent(html, { waitUntil: "load" });
+        await page.waitForNetworkIdle();
         await page.evaluateHandle("document.fonts.ready");
 
         // Paginate the content with paged.js before printing, so the PDF
