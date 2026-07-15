@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "pdf-server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').cpSync('src/seed-data','dist/seed-data',{recursive:true})\"",
     "start": "npx puppeteer browsers install chrome && node dist/server.js",
     "start:win": "cross-env PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" node dist/server.js"
   },
@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "pagedjs": "^0.4.3",
@@ -19,6 +20,7 @@
     "puppeteer": "^24.16.2"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/node": "^20.0.0",

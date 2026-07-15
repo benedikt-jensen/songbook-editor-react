@@ -1,9 +1,13 @@
+import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
+import Components from 'unplugin-vue-components/vite'
+import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  
+
   return {
     base: env.VITE_BASE_URL || '/songbook-editor-react',
     server: {
@@ -18,6 +22,17 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist'
     },
-    plugins: [react()],
+    plugins: [
+      vue(),
+      tailwindcss(),
+      Components({
+        resolvers: [PrimeVueResolver()]
+      })
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    }
   };
 });

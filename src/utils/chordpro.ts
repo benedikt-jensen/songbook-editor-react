@@ -1,19 +1,16 @@
-import React from "react";
-import LyricsSegment from "./LyricsSegment";
-
-interface Segment {
+export interface Segment {
     chord?: string;
     lyric: string;
 }
 
-interface ParsedLine {
+export interface ParsedLine {
     type: 'directive' | 'lyrics' | 'br';
     key?: string;
     value?: string;
     segments?: Segment[];
 }
 
-function parseChordPro(chordProText: string): ParsedLine[] {
+export function parseChordPro(chordProText: string): ParsedLine[] {
     const lines = chordProText.split(/\r?\n/);
     const parsedLines: ParsedLine[] = [];
 
@@ -67,19 +64,26 @@ function parseChordPro(chordProText: string): ParsedLine[] {
     return parsedLines;
 }
 
-interface ParagraphBlock {
+export interface ParagraphBlock {
     badge?: { type: 'comment' | 'part'; value: string };
     lines: ParsedLine[];
 }
 
-interface GroupedContent {
+export interface GroupedContent {
     preamble: ParsedLine[];
     blocks: ParagraphBlock[];
     footnote?: string;
     gapAfterPreamble: boolean;
 }
 
-function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
+export function getTitle(chordProText: string): string {
+    for (const line of parseChordPro(chordProText)) {
+        if (line.type === 'directive' && line.key === 'title') return line.value ?? 'Untitled';
+    }
+    return 'Untitled';
+}
+
+export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     const preamble: ParsedLine[] = [];
     const blocks: ParagraphBlock[] = [];
     let current: ParagraphBlock | null = null;
@@ -130,63 +134,3 @@ function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
 
     return { preamble, blocks, footnote, gapAfterPreamble };
 }
-
-function renderLine(line: ParsedLine, key: number) {
-    if (line.type === 'lyrics' && line.segments) {
-        return (
-            <div key={key} className="lyric-line" style={{ display: 'flex', flexWrap: 'nowrap', lineHeight: 1.2, whiteSpace: 'pre' }}>
-                {line.segments.map((segment, segmentIndex) => (
-                    <LyricsSegment key={segmentIndex} chord={segment.chord} lyric={segment.lyric} />
-                ))}
-            </div>
-        );
-    }
-    if (line.type === 'directive') {
-        return <div key={key}>{line.value}</div>;
-    }
-    return null;
-}
-
-const ChordProPreview: React.FC<{ text: string }> = ({ text }) => {
-    const parsedContent = parseChordPro(text);
-    const songNumber = 47;
-    const { preamble, blocks, footnote, gapAfterPreamble } = groupIntoBlocks(parsedContent);
-
-    return (
-        <>
-            <div className="song-number-badge">
-                <div className="center">
-                    {songNumber}
-                </div>
-            </div>
-            {preamble.map((line, lineIndex) => {
-                if (line.key === 'title') return <h2 id="song-title" key={lineIndex}>{line.value}</h2>;
-                if (line.key === 'artist') return <h4 key={lineIndex}>{line.value}</h4>;
-                return null;
-            })}
-            {gapAfterPreamble && <br/>}
-            {blocks.map((block, blockIndex) => (
-                <React.Fragment key={blockIndex}>
-                    {block.badge?.type === 'part' && (
-                        <div className="part-badge">
-                            <div className="center">{block.badge.value}</div>
-                        </div>
-                    )}
-                    {(block.lines.length > 0 || block.badge?.type === 'comment') && (
-                        <div className="song-paragraph">
-                            {block.badge?.type === 'comment' && (
-                                <div className="paragraph-badge">
-                                    <div className="center">{block.badge.value}</div>
-                                </div>
-                            )}
-                            {block.lines.map((line, lineIndex) => renderLine(line, lineIndex))}
-                        </div>
-                    )}
-                </React.Fragment>
-            ))}
-            {footnote && <div className="footnote">{footnote}</div>}
-        </>
-    );
-};
-
-export default ChordProPreview;

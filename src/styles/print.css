@@ -1,0 +1,177 @@
+/*
+ * Load-bearing stylesheet for rendered song content only - raw-imported into
+ * the paged.js pagination buffer (PrintPreview.vue) and into the HTML posted
+ * to the PDF server (pdfService.ts). Do not add general app-chrome styling
+ * here; that lives in Tailwind/PrimeVue in the rest of the app.
+ *
+ * Typography/color defaults are scoped under .song-content (the wrapper
+ * renderSongHtml() puts around its output) rather than :root/bare elements -
+ * paged.js's Polisher injects this stylesheet as a plain global <style> tag
+ * in the live app's shared document <head> (not scoped to its buffer in any
+ * way), so :root/h2/h4 selectors here would otherwise leak into the whole
+ * admin app every time the preview paginates.
+ *
+ * The --song-* custom properties are the one exception kept on :root: @page
+ * (used below for the printed page border) can only resolve custom
+ * properties defined at :root, in the *same* stylesheet - it doesn't see
+ * live DOM inheritance from unrelated stylesheets, and the PDF export path
+ * renders this HTML in its own standalone document with no other stylesheet
+ * present at all. They're prefixed --song- (not the generic --primary-color
+ * etc. used earlier) because PrimeVue's own Aura theme already defines a
+ * --primary-color at :root - an unprefixed name here would silently borrow
+ * the admin app's UI accent color in the live preview instead of failing
+ * loudly, while the PDF export (which has no PrimeVue theme at all) would
+ * still end up with nothing.
+ *
+ * body's margin is reset to 0 for the same reason as the --song-* variables:
+ * the PDF export document has no other stylesheet (no Tailwind preflight) to
+ * zero it out, so the browser's default 8px UA-stylesheet body margin was
+ * left in place - and asymmetrically so once paged.js's own page-box layout
+ * was applied on top of it, producing a page frame with uneven margins on
+ * each side instead of a uniform, consistent offset. Safe to set globally
+ * (not scoped under .song-content, since it targets <body> itself): it's
+ * already the same value Tailwind's preflight sets in the live app, so this
+ * is a no-op reinforcement there, not a competing declaration.
+ *
+ * html's font-size is pinned to the browser default (16px) for the same
+ * reason again: PrimeVue's Aura theme sets the live app's root font-size to
+ * 14px, but the standalone PDF document has nothing overriding the browser's
+ * own 16px default. .song-content sets its own font-size explicitly (6mm),
+ * so visible text is unaffected either way - but paged.js's generated
+ * .pagedjs_area/.pagedjs_page_content elements have no font-size of their
+ * own and just inherit whatever's ambient, and print.css's own `0.85em` rule
+ * on .pagedjs_page_content computes off of it. That ambient 14px-vs-16px
+ * difference was enough to shift paged.js's overflow calculation for content
+ * sitting right at a page boundary - same badge, same text, different page.
+ */
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+}
+
+:root {
+  --song-bg-color: white;
+  --song-primary-color: #142f77;
+  --song-secondary-color: #ff004d;
+
+  --song-chord-font-size: 1em;
+  --song-chord-font-wheight: 800;
+}
+
+@page {
+  size: A4;
+  margin: 6mm;
+  border: 0.15em solid var(--song-primary-color);
+  padding: 4mm 55mm;
+  background-color: white;
+}
+
+.song-content {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 5mm;
+
+  color: #213547;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pagedjs_page_content {
+  font-size: 0.85em;
+}
+
+.song-content .song-number-badge {
+  margin-inline: auto;
+  border-radius: 50%;
+  color: var(--song-bg-color);
+  background-color: var(--song-primary-color);
+  font-size: 1.2em;
+  width: 2em;
+  height: 2em;
+}
+
+.song-content .song-number-badge * {
+  font-size: 0.8em;
+  vertical-align: top;
+  padding-top: 0.2em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.song-content .song-paragraph {
+  position: relative;
+  break-inside: avoid;
+  margin-bottom: 1em;
+}
+
+.song-content .lyric-line {
+  break-inside: avoid;
+}
+
+.song-content .paragraph-badge {
+  position: absolute;
+  top: 0.2em;
+  left: -1em;
+  transform: translateX(-100%);
+  display: block;
+  width: 1.8em;
+  height: 1.8em;
+  font-size: 1.2em;
+  font-style: normal;
+  font-weight: bold;
+  border-radius: 50%;
+  color: var(--song-bg-color);
+  background-color: var(--song-secondary-color);
+}
+
+.song-content .part-badge {
+  font-size: 1.2em;
+  display: inline-block;
+  margin-inline: 1em;
+  margin-block: 0.7em;
+  padding-inline: 0.7em;
+  border-radius: 1em;
+  height: 1.5em;
+  width: 3em;
+  color: var(--song-bg-color);
+  background-color: var(--song-secondary-color);
+}
+
+.song-content .footnote {
+  position: absolute;
+  left: 0.5em;
+  bottom: 0.4em;
+  font-size: 0.52em;
+}
+
+.song-content .center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.song-content h2 {
+  font-size: 2em;
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--song-primary-color);
+  margin-block: 0.2em;
+}
+
+.song-content h4 {
+  margin-bottom: 0.3em;
+  text-align: center;
+  font-size: 1em;
+  color: var(--song-secondary-color);
+}
