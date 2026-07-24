@@ -79,7 +79,7 @@ const runPagination = async () => {
             // then the page reflows once the real font swaps in, leaving content
             // positioned outside the page boundaries paged.js already committed to.
             await document.fonts.ready;
-            const html = renderSongHtml(props.text);
+            const html = await renderSongHtml(props.text);
 
             const buffer = document.createElement('div');
             buffer.style.position = 'absolute';

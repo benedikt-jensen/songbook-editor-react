@@ -74,8 +74,8 @@ async function save() {
     }
 }
 
-function downloadPreviewAsPdf() {
-    const page = renderSongHtml(text.value);
+async function downloadPreviewAsPdf() {
+    const page = await renderSongHtml(text.value);
     const title = getTitle(text.value);
     const html = `
         <!DOCTYPE html>

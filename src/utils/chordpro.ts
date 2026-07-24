@@ -73,7 +73,6 @@ export interface GroupedContent {
     preamble: ParsedLine[];
     blocks: ParagraphBlock[];
     footnote?: string;
-    gapAfterPreamble: boolean;
 }
 
 export function getTitle(chordProText: string): string {
@@ -89,7 +88,6 @@ export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     let current: ParagraphBlock | null = null;
     let footnote: string | undefined;
     let pastPreamble = false;
-    let gapAfterPreamble = false;
 
     const closeBlock = () => {
         if (current && (current.lines.length > 0 || current.badge)) {
@@ -114,9 +112,6 @@ export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
             // between the title/artist heading and the first verse - preserve it
             // as a visible break, since later blank lines between paragraphs are
             // already spaced via .song-paragraph's margin-bottom instead.
-            if (blocks.length === 0 && !current) {
-                gapAfterPreamble = true;
-            }
             closeBlock();
             continue;
         }
@@ -132,5 +127,5 @@ export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     }
     closeBlock();
 
-    return { preamble, blocks, footnote, gapAfterPreamble };
+    return { preamble, blocks, footnote };
 }
