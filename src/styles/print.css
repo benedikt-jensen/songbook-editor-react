@@ -46,7 +46,7 @@
  */
 
 html {
-  font-size: 16px;
+  font-size: 12px;
 }
 
 body {
@@ -66,15 +66,34 @@ body {
   size: A4;
   margin: 6mm;
   border: 0.15em solid var(--song-primary-color);
-  padding: 4mm 55mm;
+  padding: 4mm 4mm;
   background-color: white;
+}
+
+.trailing-chords > .line-segment {
+  margin-left: 0.6em;
+}
+
+.trailing-chords {
+  margin: 0;
+  width: 0;
+}
+
+.song-title {
+  line-height: 1em;
+  font-size: 1.2em;
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--song-primary-color);
+  margin-block: 0.2em;
 }
 
 .song-content {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  font-size: 5mm;
+  font-size: 7mm;
 
   color: #213547;
   background-color: #ffffff;
@@ -89,14 +108,22 @@ body {
   font-size: 0.85em;
 }
 
+
+.song-chord {
+  margin-bottom: -0.2em;
+  line-height: 1em;
+  font-size: var(--song-chord-font-size); 
+  position: relative;
+}
+
 .song-content .song-number-badge {
   margin-inline: auto;
   border-radius: 50%;
   color: var(--song-bg-color);
   background-color: var(--song-primary-color);
   font-size: 1.2em;
-  width: 2em;
-  height: 2em;
+  width: 1.6em;
+  height: 1.6em;
 }
 
 .song-content .song-number-badge * {
@@ -107,49 +134,59 @@ body {
   letter-spacing: 0.05em;
 }
 
+.song-body {
+  width: min-content;
+  margin-inline: auto;
+}
+
 .song-content .song-paragraph {
   position: relative;
   break-inside: avoid;
-  margin-bottom: 1em;
+  margin-top: 1em;
+  margin-left: 2em;
+  width: min-content;
 }
 
 .song-content .lyric-line {
   break-inside: avoid;
 }
 
+.song-content .badge {
+  font-size: 1em;
+  height: 1.8em;
+  border-radius: 1em;
+  color: var(--song-bg-color);
+  background-color: var(--song-secondary-color);
+}
+
 .song-content .paragraph-badge {
   position: absolute;
-  top: 0.2em;
+  top: 3mm;
   left: -1em;
   transform: translateX(-100%);
   display: block;
   width: 1.8em;
-  height: 1.8em;
-  font-size: 1.2em;
   font-style: normal;
   font-weight: bold;
-  border-radius: 50%;
   color: var(--song-bg-color);
   background-color: var(--song-secondary-color);
 }
 
 .song-content .part-badge {
-  font-size: 1.2em;
   display: inline-block;
-  margin-inline: 1em;
-  margin-block: 0.7em;
+  margin-left: 2em;
+  margin-top: 1em;
+  margin-bottom: 0;
   padding-inline: 0.7em;
-  border-radius: 1em;
-  height: 1.5em;
   width: 3em;
-  color: var(--song-bg-color);
-  background-color: var(--song-secondary-color);
 }
 
 .song-content .footnote {
   position: absolute;
-  left: 0.5em;
-  bottom: 0.4em;
+  left: 0;
+  bottom: 0;
+  padding: 0;
+  margin: -3mm;
   font-size: 0.52em;
 }
 
@@ -160,16 +197,8 @@ body {
   height: 100%;
 }
 
-.song-content h2 {
-  font-size: 2em;
-  text-align: center;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--song-primary-color);
-  margin-block: 0.2em;
-}
-
 .song-content h4 {
+  margin-top: 0;
   margin-bottom: 0.3em;
   text-align: center;
   font-size: 1em;
