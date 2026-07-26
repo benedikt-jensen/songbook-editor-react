@@ -2,11 +2,12 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { Previewer } from 'pagedjs';
 import { renderSongHtml } from '@/utils/chordproHtml';
-import pagedStyles from '@/styles/print.css?raw';
 
 const props = defineProps<{
     text: string;
     currentPage: number;
+    /** Raw CSS for the paged.js buffer - see styles/printStyles.ts for the available choices. */
+    css: string;
 }>();
 
 const emit = defineEmits<{
@@ -24,6 +25,21 @@ let activeBuffer: HTMLDivElement | null = null;
 let previewer: Previewer | null = null;
 let isPaginating = false;
 let needsRerun = false;
+
+// paged.js's Polisher injects each run's CSS as global <style
+// data-pagedjs-inserted-styles> elements in document.head - not scoped to the
+// offscreen buffer it just laid out - and also drives page-number counters,
+// cross-references etc. by mutating that <style>'s live CSSOM directly via
+// styleSheet.insertRule() rather than writing text/child nodes. That second
+// part rules out "clone the old <style> into the buffer, then destroy the
+// original" as a way to let each run start from a clean head: cloneNode()
+// only copies DOM children, so it silently drops everything paged.js wrote
+// via insertRule(), corrupting the clone. So the old previewer's polisher is
+// only destroyed once the NEW run has already succeeded - see runPagination.
+// Because of that, every print-*.css file's shared selectors are expected to
+// declare a matching property set (verify with `npm run check:print-styles`)
+// so nothing important is left unset for the still-live outgoing stylesheet
+// to leak into the incoming run's layout measurement during that overlap.
 
 const rescale = () => {
     const scaleContainer = scaleContainerRef.value;
@@ -50,8 +66,14 @@ const showCurrentPage = () => {
     const buffer = activeBuffer;
     if (!buffer) return;
     const pages = Array.from(buffer.querySelectorAll<HTMLElement>('.pagedjs_page'));
+    if (pages.length === 0) return;
+    // Clamp rather than trust props.currentPage as-is: it's owned by the parent and can
+    // momentarily point past the end (e.g. right after a style/text change shrinks the
+    // page count) before the parent's own watcher resets it - showing nothing would look
+    // like pagination broke rather than like a page just hasn't loaded yet.
+    const index = Math.min(props.currentPage, pages.length - 1);
     pages.forEach((page, i) => {
-        page.style.display = i === props.currentPage ? '' : 'none';
+        page.style.display = i === index ? '' : 'none';
     });
     rescale();
 };
@@ -98,7 +120,7 @@ const runPagination = async () => {
 
             const thisPreviewer = new Previewer();
             try {
-                const flow = await thisPreviewer.preview(html, [{ 'preview.css': pagedStyles }], buffer);
+                const flow = await thisPreviewer.preview(html, [{ 'preview.css': props.css }], buffer);
 
                 const oldBuffer = activeBuffer;
                 const oldPreviewer = previewer;
@@ -111,14 +133,14 @@ const runPagination = async () => {
                 activeBuffer = buffer;
                 previewer = thisPreviewer;
                 oldBuffer?.remove();
-                oldPreviewer?.polisher?.styleEl?.remove();
+                oldPreviewer?.polisher?.destroy();
 
                 emit('update:pageCount', flow.total);
                 showCurrentPage();
             } catch (err) {
                 console.error('paged.js pagination failed:', err);
                 buffer.remove();
-                thisPreviewer.polisher?.styleEl?.remove();
+                thisPreviewer.polisher?.destroy();
             }
         } while (needsRerun);
     } finally {
@@ -128,7 +150,7 @@ const runPagination = async () => {
 
 let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
 watch(
-    () => props.text,
+    [() => props.text, () => props.css],
     () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {

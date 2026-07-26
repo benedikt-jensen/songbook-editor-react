@@ -70,7 +70,8 @@ export interface ParagraphBlock {
 }
 
 export interface GroupedContent {
-    preamble: ParsedLine[];
+    title?: string;
+    artist?: string;
     blocks: ParagraphBlock[];
     footnote?: string;
 }
@@ -83,7 +84,8 @@ export function getTitle(chordProText: string): string {
 }
 
 export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
-    const preamble: ParsedLine[] = [];
+    let title: string | undefined;
+    let artist: string | undefined;
     const blocks: ParagraphBlock[] = [];
     let current: ParagraphBlock | null = null;
     let footnote: string | undefined;
@@ -101,17 +103,17 @@ export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
             footnote = line.value;
             continue;
         }
-        if (line.type === 'directive' && (line.key === 'title' || line.key === 'artist') && !pastPreamble) {
-            preamble.push(line);
+        if (line.type === 'directive' && line.key === 'title' && !pastPreamble) {
+            title = line.value;
+            continue;
+        }
+        if (line.type === 'directive' && line.key === 'artist' && !pastPreamble) {
+            artist = line.value;
             continue;
         }
         pastPreamble = true;
 
         if (line.type === 'br') {
-            // A blank line before any paragraph content has started is the gap
-            // between the title/artist heading and the first verse - preserve it
-            // as a visible break, since later blank lines between paragraphs are
-            // already spaced via .song-paragraph's margin-bottom instead.
             closeBlock();
             continue;
         }
@@ -127,5 +129,5 @@ export function groupIntoBlocks(parsedContent: ParsedLine[]): GroupedContent {
     }
     closeBlock();
 
-    return { preamble, blocks, footnote };
+    return { title, artist, blocks, footnote };
 }

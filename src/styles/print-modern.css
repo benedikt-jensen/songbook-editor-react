@@ -1,0 +1,187 @@
+/*
+ * Alternative sample style ("Modern") for the same rendered song markup
+ * ChordProDocument.vue produces - see print.css for the full explanation of
+ * why the html/body resets and :root custom-property scoping exist; the
+ * same constraints apply here since this stylesheet is swapped in via the
+ * exact same raw-import + paged.js/PDF pipeline. Only the visual choices
+ * (colors, fonts, badge shapes, spacing) differ from print.css - the
+ * structural rules needed for pagination/layout to work at all are
+ * duplicated here rather than shared, since there's only one other style to
+ * compare against so far; worth factoring out a shared base once a third
+ * style makes the duplication actually painful.
+ */
+
+html {
+  font-size: 12px;
+}
+
+body {
+  margin: 0;
+}
+
+:root {
+  --song-bg-color: white;
+  --song-primary-color: #1a1a2e;
+  --song-secondary-color: #0f9b8e;
+
+  --song-chord-font-size: 0.9em;
+  --song-chord-font-wheight: 700;
+}
+
+@page {
+  size: A4;
+  margin: 6mm;
+  border-top: 2mm solid var(--song-secondary-color);
+  padding: 4mm 4mm;
+  background-color: white;
+}
+
+.trailing-chords > .line-segment {
+  margin-left: 0.6em;
+}
+
+.trailing-chords {
+  margin: 0;
+  width: 0;
+}
+
+.song-title {
+  line-height: 1.1em;
+  font-size: 1.4em;
+  text-align: left;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 800;
+  color: var(--song-primary-color);
+  margin-block: 0.2em;
+}
+
+.song-content {
+  font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 7mm;
+
+  color: #1a1a2e;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pagedjs_page_content {
+  font-size: 0.85em;
+}
+
+.song-chord {
+  display: inline;
+  margin-bottom: -0.2em;
+  line-height: 1em;
+  font-size: var(--song-chord-font-size);
+  font-weight: normal;
+  position: relative;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.song-content .song-number-badge {
+  margin-inline: 0;
+  border-radius: 0.3em;
+  color: var(--song-bg-color);
+  background-color: var(--song-secondary-color);
+  font-size: 1.1em;
+  width: 1.6em;
+  height: 1.6em;
+}
+
+.song-content .song-number-badge * {
+  font-size: 0.8em;
+  vertical-align: top;
+  padding-top: 0.2em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.song-body {
+  width: min-content;
+  margin-inline: auto;
+}
+
+.song-content .song-paragraph {
+  position: relative;
+  break-inside: avoid;
+  margin-top: 1em;
+  margin-left: 2em;
+  width: min-content;
+}
+
+.song-content .lyric-line {
+  display: flex;
+  flex-wrap: nowrap;
+  line-height: 1.2;
+  white-space: pre;
+  break-inside: avoid;
+}
+
+.song-content .badge {
+  font-size: 1em;
+  height: 1.8em;
+  border-radius: 0.25em;
+  color: var(--song-bg-color);
+  background-color: var(--song-secondary-color);
+}
+
+.song-content .paragraph-badge {
+  position: absolute;
+  top: 3mm;
+  left: -1em;
+  transform: translateX(-100%);
+  display: block;
+  width: 1.8em;
+  font-style: normal;
+  font-weight: bold;
+  text-transform: none;
+  color: var(--song-bg-color);
+  background-color: var(--song-primary-color);
+}
+
+.song-content .part-badge {
+  display: inline-block;
+  margin-left: 2em;
+  margin-top: 1em;
+  margin-bottom: 0;
+  padding-inline: 0.7em;
+  width: 3em;
+  text-transform: none;
+  font-weight: normal;
+}
+
+.song-content .footnote {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 0;
+  margin: -3mm;
+  font-size: 0.52em;
+  color: #666;
+}
+
+.song-content .center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.song-content h4 {
+  margin-top: 0;
+  margin-bottom: 0.3em;
+  text-align: left;
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--song-secondary-color);
+}

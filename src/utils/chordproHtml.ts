@@ -9,7 +9,8 @@ import ChordProDocument from '@/components/print/ChordProDocument.vue';
  * (SongEditorView.vue). Vue's template interpolation escapes text the same
  * way JSX would, so no manual HTML-escaping is needed here.
  */
-export function renderSongHtml(text: string): Promise<string> {
-    const app = createSSRApp(() => h(ChordProDocument, { text }));
+export function renderSongHtml(text: string, songNumber?: number): Promise<string> {
+    songNumber ??= 48;  // set this to 47 as default for preview purposes
+    const app = createSSRApp(() => h(ChordProDocument, { text, songNumber }));
     return renderToString(app);
 }

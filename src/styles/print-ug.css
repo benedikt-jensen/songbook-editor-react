@@ -1,0 +1,185 @@
+/*
+ * "Tab" sample style, modeled on Ultimate Guitar's dark chord-sheet view:
+ * dark background, monospace type throughout, and chords shown as small
+ * highlighted pills instead of plain bold text. See print.css for the full
+ * explanation of why the html/body resets and :root custom-property scoping
+ * exist; the same constraints apply here since this stylesheet is swapped in
+ * via the exact same raw-import + paged.js/PDF pipeline. Structural rules
+ * (layout/pagination) are duplicated from print.css rather than shared - see
+ * print-modern.css's header comment for why.
+ */
+
+html {
+  font-size: 12px;
+}
+
+body {
+  margin: 0;
+}
+
+:root {
+  --song-bg-color: #111111;
+  --song-primary-color: #ffc600;
+  --song-secondary-color: #0098fd;
+
+  --song-chord-font-size: 0.85em;
+  --song-chord-font-wheight: 700;
+}
+
+@page {
+  size: A4;
+  margin: 6mm;
+  border-top: 2mm solid var(--song-primary-color);
+  padding: 4mm 4mm;
+  background-color: #111111;
+}
+
+.trailing-chords > .line-segment {
+  margin-left: 0.6em;
+}
+
+.trailing-chords {
+  margin: 0;
+  width: 0;
+}
+
+.song-title {
+  line-height: 1.1em;
+  font-size: 1.4em;
+  text-align: left;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 700;
+  color: var(--song-bg-color);
+  margin-block: 0.2em;
+}
+
+.song-content {
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 7mm;
+
+  color: #ddccbb;
+  background-color: #111111;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pagedjs_page_content {
+  font-size: 0.85em;
+}
+
+.song-chord {
+  display: inline-block;
+  margin-bottom: -0.15em;
+  line-height: 1.3em;
+  font-size: var(--song-chord-font-size);
+  font-weight: var(--song-chord-font-wheight);
+  position: relative;
+  color: var(--song-secondary-color);
+  background-color: rgba(0, 152, 253, 0.15);
+  border-radius: 0.2em;
+  padding: 0 0.3em;
+}
+
+.song-content .song-number-badge {
+  margin-inline: 0;
+  border-radius: 0.3em;
+  color: var(--song-bg-color);
+  background-color: var(--song-primary-color);
+  font-size: 1.1em;
+  width: 1.6em;
+  height: 1.6em;
+}
+
+.song-content .song-number-badge * {
+  font-size: 0.8em;
+  vertical-align: top;
+  padding-top: 0.2em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.song-body {
+  width: min-content;
+  margin-inline: auto;
+}
+
+.song-content .song-paragraph {
+  position: relative;
+  break-inside: avoid;
+  margin-top: 1em;
+  margin-left: 2em;
+  width: min-content;
+}
+
+.song-content .lyric-line {
+  display: flex;
+  flex-wrap: nowrap;
+  line-height: 1.3;
+  white-space: pre;
+  break-inside: avoid;
+}
+
+.song-content .badge {
+  font-size: 1em;
+  height: 1.8em;
+  border-radius: 0.2em;
+  color: var(--song-bg-color);
+  background-color: var(--song-primary-color);
+}
+
+.song-content .paragraph-badge {
+  position: absolute;
+  top: 3mm;
+  left: -1em;
+  transform: translateX(-100%);
+  display: block;
+  width: 1.8em;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--song-bg-color);
+  background-color: var(--song-primary-color);
+}
+
+.song-content .part-badge {
+  display: inline-block;
+  margin-left: 2em;
+  margin-top: 1em;
+  margin-bottom: 0;
+  padding-inline: 0.7em;
+  width: auto;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.song-content .footnote {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 0;
+  margin: -3mm;
+  font-size: 0.52em;
+  color: #7a7a7a;
+}
+
+.song-content .center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.song-content h4 {
+  margin-top: 0;
+  margin-bottom: 0.3em;
+  text-align: left;
+  font-size: 0.9em;
+  font-style: normal;
+  color: #7a7a7a;
+}

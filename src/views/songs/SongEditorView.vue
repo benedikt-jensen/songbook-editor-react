@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { EditorView } from '@codemirror/view';
@@ -10,7 +10,7 @@ import { songsApi } from '@/services/songsApi';
 import { downloadPdfFromHtml } from '@/services/pdfService';
 import { renderSongHtml } from '@/utils/chordproHtml';
 import { getTitle } from '@/utils/chordpro';
-import pagedStyles from '@/styles/print.css?raw';
+import { printStyles, defaultPrintStyleId } from '@/styles/printStyles';
 
 const route = useRoute();
 const router = useRouter();
@@ -24,6 +24,12 @@ const loading = ref(true);
 const saving = ref(false);
 const dirty = ref(false);
 const loadError = ref<string | null>(null);
+
+const selectedStyleId = ref(defaultPrintStyleId);
+const selectedStyleCss = computed(() => printStyles.find((s) => s.id === selectedStyleId.value)?.css ?? printStyles[0].css);
+watch(selectedStyleId, () => {
+    currentPage.value = 0;
+});
 
 async function loadSong() {
     const idParam = route.params.id;
@@ -75,6 +81,7 @@ async function save() {
 }
 
 async function downloadPreviewAsPdf() {
+    // TODO: placeholder - should come from the song's position in the user's collection once that ordering exists.
     const page = await renderSongHtml(text.value);
     const title = getTitle(text.value);
     const html = `
@@ -84,7 +91,7 @@ async function downloadPreviewAsPdf() {
           <meta charset="UTF-8">
           <title>${title}</title>
           <style>
-            ${pagedStyles}
+            ${selectedStyleCss.value}
           </style>
           <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         </head>
@@ -165,6 +172,10 @@ onBeforeRouteLeave(() => {
     <Message v-if="loadError" severity="error" :closable="false">{{ loadError }}</Message>
     <div v-else class="flex flex-col lg:flex-row gap-4" style="height: calc(100vh - 8rem)">
         <div class="flex flex-1 flex-col min-w-0 min-h-0">
+            <div class="flex items-center gap-2 mb-2">
+                <label for="print-style" class="text-sm text-muted-color">Style</label>
+                <Select id="print-style" v-model="selectedStyleId" :options="printStyles" option-label="label" option-value="id" size="small" />
+            </div>
             <div class="absolute flex items-center gap-2 justify-between mb-2" style="transform: translateY(-100%)">
                 <ProgressSpinner v-if="loading" style="width: 1.25rem; height: 1.25rem" strokeWidth="6" />
                 <span v-else-if="dirty" class="text-sm text-muted-color">Unsaved changes</span>
@@ -178,9 +189,9 @@ onBeforeRouteLeave(() => {
             </div>
         </div>
 
-        <div class="flex flex-col h-full">
-            <div class="group relative flex flex-col h-full aspect-[210/297] shrink-0 overflow-hidden border border-surface-300 dark:border-surface-700 rounded">
-                <PrintPreview :text="text" :current-page="currentPage" @update:page-count="pageCount = $event" />
+        <div class="flex flex-col h-full max-w-[45%]">
+            <div class="group relative flex flex-col aspect-[210/297] shrink-0 overflow-hidden border border-surface-300 dark:border-surface-700 rounded max-h-full max-w-full">
+                <PrintPreview :text="text" :current-page="currentPage" :css="selectedStyleCss" @update:page-count="pageCount = $event" />
                 <div
                     class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 py-1 px-3 rounded-full bg-white/90 dark:bg-surface-900/90 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150"
                 >

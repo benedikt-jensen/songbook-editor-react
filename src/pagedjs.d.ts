@@ -1,6 +1,6 @@
 declare module 'pagedjs' {
     export class Previewer {
-        polisher: { styleEl?: HTMLStyleElement };
+        polisher: { styleEl?: HTMLStyleElement; destroy(): void };
         preview(
             content?: string | Node,
             stylesheets?: (string | Record<string, string>)[],
