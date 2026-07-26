@@ -26,7 +26,9 @@ const dirty = ref(false);
 const loadError = ref<string | null>(null);
 
 const selectedStyleId = ref(defaultPrintStyleId);
-const selectedStyleCss = computed(() => printStyles.find((s) => s.id === selectedStyleId.value)?.css ?? printStyles[0].css);
+const selectedStyle = computed(() => printStyles.find((s) => s.id === selectedStyleId.value) ?? printStyles[0]);
+const selectedStyleCss = computed(() => selectedStyle.value.css);
+const selectedStyleTemplate = computed(() => selectedStyle.value.template);
 watch(selectedStyleId, () => {
     currentPage.value = 0;
 });
@@ -81,8 +83,7 @@ async function save() {
 }
 
 async function downloadPreviewAsPdf() {
-    // TODO: placeholder - should come from the song's position in the user's collection once that ordering exists.
-    const page = await renderSongHtml(text.value);
+    const page = await renderSongHtml(text.value, selectedStyleTemplate.value);
     const title = getTitle(text.value);
     const html = `
         <!DOCTYPE html>
@@ -191,7 +192,13 @@ onBeforeRouteLeave(() => {
 
         <div class="flex flex-col h-full max-w-[45%]">
             <div class="group relative flex flex-col aspect-[210/297] shrink-0 overflow-hidden border border-surface-300 dark:border-surface-700 rounded max-h-full max-w-full">
-                <PrintPreview :text="text" :current-page="currentPage" :css="selectedStyleCss" @update:page-count="pageCount = $event" />
+                <PrintPreview
+                    :text="text"
+                    :current-page="currentPage"
+                    :template="selectedStyleTemplate"
+                    :css="selectedStyleCss"
+                    @update:page-count="pageCount = $event"
+                />
                 <div
                     class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 py-1 px-3 rounded-full bg-white/90 dark:bg-surface-900/90 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150"
                 >

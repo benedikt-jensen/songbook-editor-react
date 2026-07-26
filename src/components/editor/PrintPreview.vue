@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, type Component } from 'vue';
 import { Previewer } from 'pagedjs';
 import { renderSongHtml } from '@/utils/chordproHtml';
 
 const props = defineProps<{
     text: string;
     currentPage: number;
+    /** The selected print style's own template component - see styles/printStyles.ts. */
+    template: Component;
     /** Raw CSS for the paged.js buffer - see styles/printStyles.ts for the available choices. */
     css: string;
 }>();
@@ -36,10 +38,15 @@ let needsRerun = false;
 // only copies DOM children, so it silently drops everything paged.js wrote
 // via insertRule(), corrupting the clone. So the old previewer's polisher is
 // only destroyed once the NEW run has already succeeded - see runPagination.
-// Because of that, every print-*.css file's shared selectors are expected to
-// declare a matching property set (verify with `npm run check:print-styles`)
-// so nothing important is left unset for the still-live outgoing stylesheet
-// to leak into the incoming run's layout measurement during that overlap.
+// This means the outgoing style's <style> tag is still live in document.head
+// while the incoming run's layout is measured. That used to matter a lot: if
+// two styles shared a generic class name (.song-title etc.) and declared
+// different property sets for it, the outgoing style's leftover value could
+// silently apply during that overlap and skew the measured page count. Each
+// print style now scopes its entire style.css under its own unique
+// .song-content-<id> root class (see classic/style.css's header comment), so
+// an outgoing style's rules can never match another style's elements at all
+// - `npm run check:print-styles` verifies every style keeps that scoping.
 
 const rescale = () => {
     const scaleContainer = scaleContainerRef.value;
@@ -101,7 +108,7 @@ const runPagination = async () => {
             // then the page reflows once the real font swaps in, leaving content
             // positioned outside the page boundaries paged.js already committed to.
             await document.fonts.ready;
-            const html = await renderSongHtml(props.text);
+            const html = await renderSongHtml(props.text, props.template);
 
             const buffer = document.createElement('div');
             buffer.style.position = 'absolute';
@@ -150,7 +157,7 @@ const runPagination = async () => {
 
 let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
 watch(
-    [() => props.text, () => props.css],
+    [() => props.text, () => props.css, () => props.template],
     () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {

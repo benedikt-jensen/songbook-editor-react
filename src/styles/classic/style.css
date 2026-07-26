@@ -4,15 +4,23 @@
  * to the PDF server (pdfService.ts). Do not add general app-chrome styling
  * here; that lives in Tailwind/PrimeVue in the rest of the app.
  *
- * Typography/color defaults are scoped under .song-content (the wrapper
- * renderSongHtml() puts around its output) rather than :root/bare elements -
- * paged.js's Polisher injects this stylesheet as a plain global <style> tag
- * in the live app's shared document <head> (not scoped to its buffer in any
- * way), so :root/h2/h4 selectors here would otherwise leak into the whole
- * admin app every time the preview paginates.
+ * Every selector below (other than the documented exceptions) is scoped
+ * under .song-content-classic - this style's own root class, set on
+ * ChordProDocument.vue's top-level element. Each print style
+ * (styles/<id>/) uses its own unique root class rather than a shared
+ * .song-content, specifically so that paged.js's Polisher injecting this
+ * stylesheet as a plain global <style> tag in the live app's shared document
+ * <head> (not scoped to its buffer in any way - see PrintPreview.vue) can
+ * never let one style's rules match another style's elements, even for the
+ * brief window where both styles' <style> tags are live at once during a
+ * style switch (see the comment above runPagination() in PrintPreview.vue).
+ * Before this, styles reused generic class names like .song-title and had
+ * to hand-maintain matching property sets across every style.css to avoid
+ * that overlap corrupting each other's measured layout - this scoping makes
+ * that unnecessary and lets each style's template diverge freely.
  *
- * The --song-* custom properties are the one exception kept on :root: @page
- * (used below for the printed page border) can only resolve custom
+ * The --song-* custom properties are kept on :root (not scoped) because
+ * @page (used below for the printed page border) can only resolve custom
  * properties defined at :root, in the *same* stylesheet - it doesn't see
  * live DOM inheritance from unrelated stylesheets, and the PDF export path
  * renders this HTML in its own standalone document with no other stylesheet
@@ -21,7 +29,9 @@
  * --primary-color at :root - an unprefixed name here would silently borrow
  * the admin app's UI accent color in the live preview instead of failing
  * loudly, while the PDF export (which has no PrimeVue theme at all) would
- * still end up with nothing.
+ * still end up with nothing. Being global (not scoped), these still get
+ * redeclared per style switch just like before, but only ever affect this
+ * style's own scoped selectors that reference them via var(...).
  *
  * body's margin is reset to 0 for the same reason as the --song-* variables:
  * the PDF export document has no other stylesheet (no Tailwind preflight) to
@@ -29,20 +39,27 @@
  * left in place - and asymmetrically so once paged.js's own page-box layout
  * was applied on top of it, producing a page frame with uneven margins on
  * each side instead of a uniform, consistent offset. Safe to set globally
- * (not scoped under .song-content, since it targets <body> itself): it's
- * already the same value Tailwind's preflight sets in the live app, so this
- * is a no-op reinforcement there, not a competing declaration.
+ * (not scoped): it's already the same value Tailwind's preflight sets in the
+ * live app, so this is a no-op reinforcement there, not a competing
+ * declaration.
  *
  * html's font-size is pinned to the browser default (16px) for the same
  * reason again: PrimeVue's Aura theme sets the live app's root font-size to
  * 14px, but the standalone PDF document has nothing overriding the browser's
- * own 16px default. .song-content sets its own font-size explicitly (6mm),
- * so visible text is unaffected either way - but paged.js's generated
+ * own 16px default. .song-content-classic sets its own font-size explicitly
+ * (7mm), so visible text is unaffected either way - but paged.js's generated
  * .pagedjs_area/.pagedjs_page_content elements have no font-size of their
- * own and just inherit whatever's ambient, and print.css's own `0.85em` rule
+ * own and just inherit whatever's ambient, and this file's own `0.85em` rule
  * on .pagedjs_page_content computes off of it. That ambient 14px-vs-16px
  * difference was enough to shift paged.js's overflow calculation for content
  * sitting right at a page boundary - same badge, same text, different page.
+ *
+ * .pagedjs_page_content is the one selector below that's intentionally left
+ * unscoped: it's paged.js's own page-box wrapper, an ANCESTOR of
+ * .song-content-classic rather than a descendant, so it can't be scoped
+ * under it the way everything else here is. It's still shared infrastructure
+ * every style renders into, so keep its value in sync with the other
+ * styles' style.css (`npm run check:print-styles` verifies this).
  */
 
 html {
@@ -70,27 +87,11 @@ body {
   background-color: white;
 }
 
-.trailing-chords > .line-segment {
-  margin-left: 0.6em;
+.pagedjs_page_content {
+  font-size: 0.85em;
 }
 
-.trailing-chords {
-  margin: 0;
-  width: 0;
-}
-
-.song-title {
-  line-height: 1em;
-  font-size: 1.2em;
-  text-align: center;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--song-primary-color);
-  margin-block: 0.2em;
-}
-
-.song-content {
+.song-content-classic {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -105,12 +106,27 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.pagedjs_page_content {
-  font-size: 0.85em;
+.song-content-classic .trailing-chords > .line-segment {
+  margin-left: 0.6em;
 }
 
+.song-content-classic .trailing-chords {
+  margin: 0;
+  width: 0;
+}
 
-.song-chord {
+.song-content-classic .song-title {
+  line-height: 1em;
+  font-size: 1.2em;
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--song-primary-color);
+  margin-block: 0.2em;
+}
+
+.song-content-classic .song-chord {
   display: inline;
   margin-bottom: -0.2em;
   line-height: 1em;
@@ -123,7 +139,7 @@ body {
   padding: 0;
 }
 
-.song-content .song-number-badge {
+.song-content-classic .song-number-badge {
   margin-inline: auto;
   border-radius: 50%;
   color: var(--song-bg-color);
@@ -133,7 +149,7 @@ body {
   height: 1.6em;
 }
 
-.song-content .song-number-badge * {
+.song-content-classic .song-number-badge * {
   font-size: 0.8em;
   vertical-align: top;
   padding-top: 0.2em;
@@ -141,12 +157,12 @@ body {
   letter-spacing: 0.05em;
 }
 
-.song-body {
+.song-content-classic .song-body {
   width: min-content;
   margin-inline: auto;
 }
 
-.song-content .song-paragraph {
+.song-content-classic .song-paragraph {
   position: relative;
   break-inside: avoid;
   margin-top: 1em;
@@ -154,7 +170,7 @@ body {
   width: min-content;
 }
 
-.song-content .lyric-line {
+.song-content-classic .lyric-line {
   display: flex;
   flex-wrap: nowrap;
   line-height: 1.2;
@@ -162,7 +178,7 @@ body {
   break-inside: avoid;
 }
 
-.song-content .badge {
+.song-content-classic .badge {
   font-size: 1em;
   height: 1.8em;
   border-radius: 1em;
@@ -170,7 +186,7 @@ body {
   background-color: var(--song-secondary-color);
 }
 
-.song-content .paragraph-badge {
+.song-content-classic .paragraph-badge {
   position: absolute;
   top: 3mm;
   left: -1em;
@@ -179,44 +195,39 @@ body {
   width: 1.8em;
   font-style: normal;
   font-weight: bold;
-  text-transform: none;
   color: var(--song-bg-color);
   background-color: var(--song-secondary-color);
 }
 
-.song-content .part-badge {
+.song-content-classic .part-badge {
   display: inline-block;
   margin-left: 2em;
   margin-top: 1em;
   margin-bottom: 0;
   padding-inline: 0.7em;
   width: 3em;
-  text-transform: none;
-  font-weight: normal;
 }
 
-.song-content .footnote {
+.song-content-classic .footnote {
   position: absolute;
   left: 0;
   bottom: 0;
   padding: 0;
   margin: -3mm;
   font-size: 0.52em;
-  color: inherit;
 }
 
-.song-content .center {
+.song-content-classic .center {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 }
 
-.song-content h4 {
+.song-content-classic h4 {
   margin-top: 0;
   margin-bottom: 0.3em;
   text-align: center;
   font-size: 1em;
-  font-style: normal;
   color: var(--song-secondary-color);
 }

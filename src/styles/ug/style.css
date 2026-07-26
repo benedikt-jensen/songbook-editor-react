@@ -1,12 +1,12 @@
 /*
  * "Tab" sample style, modeled on Ultimate Guitar's dark chord-sheet view:
  * dark background, monospace type throughout, and chords shown as small
- * highlighted pills instead of plain bold text. See print.css for the full
- * explanation of why the html/body resets and :root custom-property scoping
- * exist; the same constraints apply here since this stylesheet is swapped in
- * via the exact same raw-import + paged.js/PDF pipeline. Structural rules
- * (layout/pagination) are duplicated from print.css rather than shared - see
- * print-modern.css's header comment for why.
+ * highlighted pills instead of plain bold text. See classic/style.css for
+ * the full explanation of why the html/body resets, :root custom-property
+ * scoping, and per-style .song-content-ug root-class scoping exist; the same
+ * constraints apply here since this stylesheet is swapped in via the exact
+ * same raw-import + paged.js/PDF pipeline, targeting this style's own
+ * ChordProDocument.vue.
  */
 
 html {
@@ -34,27 +34,11 @@ body {
   background-color: #111111;
 }
 
-.trailing-chords > .line-segment {
-  margin-left: 0.6em;
+.pagedjs_page_content {
+  font-size: 0.85em;
 }
 
-.trailing-chords {
-  margin: 0;
-  width: 0;
-}
-
-.song-title {
-  line-height: 1.1em;
-  font-size: 1.4em;
-  text-align: left;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  font-weight: 700;
-  color: var(--song-bg-color);
-  margin-block: 0.2em;
-}
-
-.song-content {
+.song-content-ug {
   font-family: 'Roboto Mono', 'Courier New', monospace;
   line-height: 1.5;
   font-weight: 400;
@@ -69,11 +53,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.pagedjs_page_content {
-  font-size: 0.85em;
+.song-content-ug .trailing-chords > .line-segment {
+  margin-left: 0.6em;
 }
 
-.song-chord {
+.song-content-ug .trailing-chords {
+  margin: 0;
+  width: 0;
+}
+
+.song-content-ug .song-title {
+  line-height: 1.1em;
+  font-size: 1.4em;
+  text-align: left;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  color: var(--song-bg-color);
+  margin-block: 0.2em;
+}
+
+.song-content-ug .song-chord {
   display: inline-block;
   margin-bottom: -0.15em;
   line-height: 1.3em;
@@ -86,7 +85,7 @@ body {
   padding: 0 0.3em;
 }
 
-.song-content .song-number-badge {
+.song-content-ug .song-number-badge {
   margin-inline: 0;
   border-radius: 0.3em;
   color: var(--song-bg-color);
@@ -96,7 +95,7 @@ body {
   height: 1.6em;
 }
 
-.song-content .song-number-badge * {
+.song-content-ug .song-number-badge * {
   font-size: 0.8em;
   vertical-align: top;
   padding-top: 0.2em;
@@ -104,12 +103,12 @@ body {
   letter-spacing: 0.05em;
 }
 
-.song-body {
+.song-content-ug .song-body {
   width: min-content;
   margin-inline: auto;
 }
 
-.song-content .song-paragraph {
+.song-content-ug .song-paragraph {
   position: relative;
   break-inside: avoid;
   margin-top: 1em;
@@ -117,7 +116,7 @@ body {
   width: min-content;
 }
 
-.song-content .lyric-line {
+.song-content-ug .lyric-line {
   display: flex;
   flex-wrap: nowrap;
   line-height: 1.3;
@@ -125,7 +124,7 @@ body {
   break-inside: avoid;
 }
 
-.song-content .badge {
+.song-content-ug .badge {
   font-size: 1em;
   height: 1.8em;
   border-radius: 0.2em;
@@ -133,7 +132,7 @@ body {
   background-color: var(--song-primary-color);
 }
 
-.song-content .paragraph-badge {
+.song-content-ug .paragraph-badge {
   position: absolute;
   top: 3mm;
   left: -1em;
@@ -147,7 +146,7 @@ body {
   background-color: var(--song-primary-color);
 }
 
-.song-content .part-badge {
+.song-content-ug .part-badge {
   display: inline-block;
   margin-left: 2em;
   margin-top: 1em;
@@ -158,7 +157,7 @@ body {
   font-weight: 700;
 }
 
-.song-content .footnote {
+.song-content-ug .footnote {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -168,18 +167,17 @@ body {
   color: #7a7a7a;
 }
 
-.song-content .center {
+.song-content-ug .center {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 }
 
-.song-content h4 {
+.song-content-ug h4 {
   margin-top: 0;
   margin-bottom: 0.3em;
   text-align: left;
   font-size: 0.9em;
-  font-style: normal;
   color: #7a7a7a;
 }

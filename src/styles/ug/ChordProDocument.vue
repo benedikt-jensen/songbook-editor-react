@@ -66,7 +66,7 @@ function toRenderLines(lines: ParsedLine[]): RenderLine[] {
 </script>
 
 <template>
-    <div class="song-content">
+    <div class="song-content-ug">
         <div v-if="songNumber !== undefined" class="song-number-badge">
             <div class="center">{{ songNumber }}</div>
         </div>
