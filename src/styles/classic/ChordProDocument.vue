@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { parseChordPro, groupIntoBlocks, type ParsedLine, type Segment } from '@/utils/chordpro';
+import { parseChordPro, groupIntoBlocks, type ParsedLine, type Segment, type ParagraphBlock } from '@/utils/chordpro';
 import LyricsSegment from './LyricsSegment.vue';
 
 const props = defineProps<{
@@ -63,6 +63,21 @@ function toRenderLine(line: ParsedLine): RenderLine | null {
 function toRenderLines(lines: ParsedLine[]): RenderLine[] {
     return lines.map(toRenderLine).filter((line): line is RenderLine => line !== null);
 }
+
+function getBlockBadgeText(blocks: ParagraphBlock[], blockIndex: number): string {
+    var blockBadge = blocks[blockIndex].badge?.value;
+    var blocksOfThisType = blocks
+        .filter(b => b.badge?.type == "comment")
+        .filter(b => b.badge?.value == blockBadge);
+    if (blocksOfThisType.length <= 1) {
+        return blockBadge?.substring(0) ?? "N/A";
+    }
+    var number = 1;
+    for (let i = 0; i<blockIndex; i++) {
+        if 
+    }
+    return '';
+}
 </script>
 
 <template>
@@ -82,7 +97,7 @@ function toRenderLines(lines: ParsedLine[]): RenderLine[] {
 
                 <div v-if="block.lines.length > 0 || block.badge?.type === 'comment'" class="song-paragraph">
                     <div v-if="block.badge?.type === 'comment'" class="badge paragraph-badge">
-                        <div class="center">{{ block.badge.value }}</div>
+                        <div class="center">{{ block.badge.value[0] + (song.blocks) }}</div>
                     </div>
 
                     <template v-for="(line, lineIndex) in toRenderLines(block.lines)" :key="lineIndex">
