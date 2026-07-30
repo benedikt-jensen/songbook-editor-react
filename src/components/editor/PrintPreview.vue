@@ -185,8 +185,8 @@ onUnmounted(() => {
 
 <template>
     <div class="flex-1 w-fit min-w-0 min-h-0 overflow-hidden relative">
-        <div class="origin-top-left overflow-hidden" ref="scaleContainerRef">
-            <div ref="pagedContainerRef" style="position: relative"></div>
+        <div ref="scaleContainerRef" class="origin-top-left overflow-hidden">
+            <div ref="pagedContainerRef" style="position: relative" />
         </div>
     </div>
 </template>

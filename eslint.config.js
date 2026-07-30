@@ -24,4 +24,10 @@ export default [
       'vue/multi-word-component-names': 'off',
     },
   },
+  {
+    files: ['scripts/**/*.mjs', 'vite.config.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ]

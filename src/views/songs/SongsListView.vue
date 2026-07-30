@@ -70,8 +70,8 @@ function confirmDelete(song: SongSummary) {
             <Column style="width: 6rem">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openSong(data)" />
-                        <Button icon="pi pi-trash" severity="danger" text rounded @click="confirmDelete(data)" />
+                        <Button icon="pi pi-pencil" aria-label="Edit song" severity="secondary" text rounded @click="openSong(data)" />
+                        <Button icon="pi pi-trash" aria-label="Delete song" severity="danger" text rounded @click="confirmDelete(data)" />
                     </div>
                 </template>
             </Column>

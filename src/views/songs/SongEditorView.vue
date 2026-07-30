@@ -182,7 +182,7 @@ onBeforeRouteLeave(() => {
                 <span v-else-if="dirty" class="text-sm text-muted-color">Unsaved changes</span>
             </div>
             <div class="flex-1 border border-surface-300 dark:border-surface-700 rounded overflow-auto">
-                <div ref="editorRef"></div>
+                <div ref="editorRef" />
             </div>
             <div class="flex gap-2 mt-2">
                 <Button label="Save" icon="pi pi-save" :loading="saving" :disabled="loading" @click="save" />
@@ -202,9 +202,9 @@ onBeforeRouteLeave(() => {
                 <div
                     class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 py-1 px-3 rounded-full bg-white/90 dark:bg-surface-900/90 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150"
                 >
-                    <Button icon="pi pi-angle-left" text rounded size="small" :disabled="currentPage === 0" @click="currentPage = Math.max(0, currentPage - 1)" />
+                    <Button icon="pi pi-angle-left" aria-label="Previous page" text rounded size="small" :disabled="currentPage === 0" @click="currentPage = Math.max(0, currentPage - 1)" />
                     <span class="text-sm">Page {{ currentPage + 1 }} of {{ Math.max(pageCount, 1) }}</span>
-                    <Button icon="pi pi-angle-right" text rounded size="small" :disabled="currentPage === pageCount - 1 || pageCount === 0" @click="currentPage = Math.min(pageCount - 1, currentPage + 1)" />
+                    <Button icon="pi pi-angle-right" aria-label="Next page" text rounded size="small" :disabled="currentPage === pageCount - 1 || pageCount === 0" @click="currentPage = Math.min(pageCount - 1, currentPage + 1)" />
                 </div>
             </div>
         </div>
