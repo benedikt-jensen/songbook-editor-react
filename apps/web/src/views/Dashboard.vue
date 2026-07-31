@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { songsApi, type SongSummary } from '@/services/songsApi';
+import { songsApi } from '@/services/songsApi';
+import type { SongSummary } from '@/types/song';
 
 const songs = ref<SongSummary[]>([]);
 const loading = ref(true);

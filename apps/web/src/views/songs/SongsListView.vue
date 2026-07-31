@@ -3,7 +3,8 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import { songsApi, type SongSummary } from '@/services/songsApi';
+import { songsApi } from '@/services/songsApi';
+import type { SongSummary } from '@/types/song';
 
 const router = useRouter();
 const toast = useToast();
@@ -57,15 +58,15 @@ function confirmDelete(song: SongSummary) {
             </template>
         </Toolbar>
 
-        <DataTable :value="songs" :loading="loading" dataKey="id" paginator :rows="15" sortField="updated_at" :sortOrder="-1">
+        <DataTable :value="songs" :loading="loading" dataKey="id" paginator :rows="15" sortField="updatedAt" :sortOrder="-1">
             <Column field="title" header="Title" sortable>
                 <template #body="{ data }">
                     <a class="cursor-pointer text-primary font-medium hover:underline" @click="openSong(data)">{{ data.title }}</a>
                 </template>
             </Column>
             <Column field="artist" header="Artist" sortable />
-            <Column field="updated_at" header="Updated" sortable>
-                <template #body="{ data }">{{ new Date(data.updated_at).toLocaleString() }}</template>
+            <Column field="updatedAt" header="Updated" sortable>
+                <template #body="{ data }">{{ new Date(data.updatedAt).toLocaleString() }}</template>
             </Column>
             <Column style="width: 6rem">
                 <template #body="{ data }">

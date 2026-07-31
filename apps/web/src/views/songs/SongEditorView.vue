@@ -10,6 +10,7 @@ import { songsApi } from '@/services/songsApi';
 import { downloadPdfFromHtml } from '@/services/pdfService';
 import { renderSongHtml } from '@/chordpro/renderToHtml';
 import { getTitle } from '@/chordpro/parser';
+import { moveChord } from '@/chordpro/chordPlacement';
 import { printStyles, defaultPrintStyleId } from '@/print-styles/registry';
 
 const route = useRoute();
@@ -140,6 +141,23 @@ onUnmounted(() => {
     view?.destroy();
     view = null;
 });
+
+// Integration point for the future visual/drag chord editor: moves the
+// `chordIndex`-th chord on 1-based document line `lineNumber` to `toOffset`
+// in that line's lyric text, via a precise CodeMirror range replacement
+// (not a full-document swap - see the external-sync watch above for why that
+// matters: it keeps cursor position, scroll and undo history intact). The
+// resulting doc change flows back into `text` through the updateListener
+// above, exactly like a keystroke would. Exposed so a future drag handler -
+// wherever it ends up living - can invoke it through a template ref.
+function moveChordOnLine(lineNumber: number, chordIndex: number, toOffset: number) {
+    if (!view) return;
+    const line = view.state.doc.line(lineNumber);
+    const newLineText = moveChord(line.text, chordIndex, toOffset);
+    view.dispatch({ changes: { from: line.from, to: line.to, insert: newLineText } });
+}
+
+defineExpose({ moveChordOnLine });
 
 // Pushes externally-set text (loading a song, switching songs) into CodeMirror.
 // User keystrokes already flow the other way via the updateListener above, so

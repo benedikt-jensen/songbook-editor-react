@@ -1,15 +1,18 @@
 import { API_BASE_URL } from './apiBase';
+import type { Song, SongSummary } from '@/types/song';
 
-export interface SongSummary {
-    id: number;
-    title: string;
-    artist: string | null;
-    updated_at: string;
+// The wire format, as apps/api's sqlite rows come back over JSON (snake_case
+// column names). Kept private to this module - everything else in the app
+// deals in the camelCase Song/SongSummary types from @/types/song.
+type RawSongSummary = { id: number; title: string; artist: string | null; updated_at: string };
+type RawSong = RawSongSummary & { content: string; created_at: string };
+
+function toSongSummary(raw: RawSongSummary): SongSummary {
+    return { id: raw.id, title: raw.title, artist: raw.artist, updatedAt: raw.updated_at };
 }
 
-export interface SongDetail extends SongSummary {
-    content: string;
-    created_at: string;
+function toSong(raw: RawSong): Song {
+    return { ...toSongSummary(raw), content: raw.content, createdAt: raw.created_at };
 }
 
 async function handle<T>(response: Response): Promise<T> {
@@ -21,27 +24,35 @@ async function handle<T>(response: Response): Promise<T> {
 
 export const songsApi = {
     list(): Promise<SongSummary[]> {
-        return fetch(`${API_BASE_URL}/songs`).then((r) => handle<SongSummary[]>(r));
+        return fetch(`${API_BASE_URL}/songs`)
+            .then((r) => handle<RawSongSummary[]>(r))
+            .then((rows) => rows.map(toSongSummary));
     },
 
-    get(id: number): Promise<SongDetail> {
-        return fetch(`${API_BASE_URL}/songs/${id}`).then((r) => handle<SongDetail>(r));
+    get(id: number): Promise<Song> {
+        return fetch(`${API_BASE_URL}/songs/${id}`)
+            .then((r) => handle<RawSong>(r))
+            .then(toSong);
     },
 
-    create(content: string): Promise<SongDetail> {
+    create(content: string): Promise<Song> {
         return fetch(`${API_BASE_URL}/songs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content }),
-        }).then((r) => handle<SongDetail>(r));
+        })
+            .then((r) => handle<RawSong>(r))
+            .then(toSong);
     },
 
-    update(id: number, content: string): Promise<SongDetail> {
+    update(id: number, content: string): Promise<Song> {
         return fetch(`${API_BASE_URL}/songs/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content }),
-        }).then((r) => handle<SongDetail>(r));
+        })
+            .then((r) => handle<RawSong>(r))
+            .then(toSong);
     },
 
     remove(id: number): Promise<void> {
