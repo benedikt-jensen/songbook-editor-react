@@ -189,8 +189,8 @@ onBeforeRouteLeave(() => {
 
 <template>
     <Message v-if="loadError" severity="error" :closable="false">{{ loadError }}</Message>
-    <div v-else class="flex flex-col lg:flex-row gap-4" style="height: calc(100vh - 8rem)">
-        <div class="flex flex-1 flex-col min-w-0 min-h-0">
+    <div v-else class="flex flex-col lg:flex-row gap-4 lg:h-[calc(100vh-8rem)]">
+        <div class="flex flex-1 flex-col min-w-0 min-h-0 h-[60vh] lg:h-auto">
             <div class="flex items-center gap-2 mb-2">
                 <label for="print-style" class="text-sm text-muted-color">Style</label>
                 <Select id="print-style" v-model="selectedStyleId" :options="printStyles" option-label="label" option-value="id" size="small" />
@@ -208,7 +208,7 @@ onBeforeRouteLeave(() => {
             </div>
         </div>
 
-        <div class="flex flex-col h-full max-w-[45%]">
+        <div class="flex flex-col w-full lg:h-full lg:w-fit lg:max-w-[45%]">
             <div class="group relative flex flex-col aspect-[210/297] shrink-0 overflow-hidden border border-surface-300 dark:border-surface-700 rounded max-h-full max-w-full">
                 <PrintPreview
                     :text="text"
