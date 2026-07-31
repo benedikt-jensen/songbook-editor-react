@@ -1,0 +1,20 @@
+<script setup lang="ts">
+import type { Segment } from '@/chordpro/parser';
+
+withDefaults(
+    defineProps<{
+        segment: Segment;
+        textOnly?: boolean;
+    }>(),
+    { textOnly: false },
+);
+</script>
+
+<template>
+    <div class="line-segment" style="display: inline-block">
+        <div v-if="!textOnly" class="song-chord">
+            <div style="height: 1em; color: var(--song-secondary-color); font-weight: 1000; font-family: monospace">{{ segment.chord }}</div>
+        </div>
+        <span style="height: 1em">{{ segment.lyric }}</span>
+    </div>
+</template>
