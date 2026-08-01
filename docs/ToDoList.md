@@ -277,14 +277,14 @@ These may be valuable later, but they are not necessary to prove that someone wi
 
 The MVP is ready when a new user can:
 
-- [ ] Register
-- [ ] Create or import a ChordPro song
-- [ ] Preview it correctly
-- [ ] Transpose it
-- [ ] Add it to a setlist
-- [ ] Reorder the setlist
-- [ ] Export a polished PDF
-- [ ] Share a mobile-friendly link
+- [x] Register
+- [x] Create or import a ChordPro song
+- [x] Preview it correctly
+- [x] Transpose it
+- [x] Add it to a setlist
+- [x] Reorder the setlist
+- [x] Export a polished PDF
+- [x] Share a mobile-friendly link
 - [ ] Let another person view it for free
 - [ ] Purchase a creator subscription
 - [ ] Complete the entire workflow without your assistance

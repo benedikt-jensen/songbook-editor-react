@@ -11,6 +11,7 @@ import { downloadPdfFromHtml } from '@/services/pdfService';
 import { renderSongHtml } from '@/chordpro/renderToHtml';
 import { getTitle } from '@/chordpro/parser';
 import { moveChord } from '@/chordpro/chordPlacement';
+import { transposeChordProText } from '@/chordpro/transpose';
 import { printStyles, defaultPrintStyleId } from '@/print-styles/registry';
 
 const route = useRoute();
@@ -103,6 +104,15 @@ async function downloadPreviewAsPdf() {
         </html>
     `;
     downloadPdfFromHtml(html, `${title}.pdf`);
+}
+
+// Rewrites the whole document (every chord shifts), so - unlike moveChord's
+// precise per-line edit - this goes through the plain `text` ref: the
+// external-sync watch below turns any change to it into a full-document
+// CodeMirror replace, same path song loading already uses.
+function transpose(semitones: number) {
+    text.value = transposeChordProText(text.value, semitones);
+    dirty.value = true;
 }
 
 const editorRef = ref<HTMLDivElement | null>(null);
@@ -205,6 +215,11 @@ onBeforeRouteLeave(() => {
             <div class="flex gap-2 mt-2">
                 <Button label="Save" icon="pi pi-save" :loading="saving" :disabled="loading" @click="save" />
                 <Button label="Print to PDF" icon="pi pi-print" severity="secondary" outlined :disabled="loading" @click="downloadPreviewAsPdf" />
+                <div class="flex items-center gap-1 ml-auto">
+                    <span class="text-sm text-muted-color mr-1">Transpose</span>
+                    <Button icon="pi pi-minus" aria-label="Transpose down a semitone" severity="secondary" outlined size="small" :disabled="loading" @click="transpose(-1)" />
+                    <Button icon="pi pi-plus" aria-label="Transpose up a semitone" severity="secondary" outlined size="small" :disabled="loading" @click="transpose(1)" />
+                </div>
             </div>
         </div>
 

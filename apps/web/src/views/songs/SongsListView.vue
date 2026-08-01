@@ -30,6 +30,27 @@ function openSong(song: SongSummary) {
     router.push(`/songs/${song.id}`);
 }
 
+const importInputRef = ref<HTMLInputElement | null>(null);
+const importing = ref(false);
+
+async function importFiles(event: Event) {
+    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    (event.target as HTMLInputElement).value = ''; // allow re-selecting the same file later
+    if (files.length === 0) return;
+
+    importing.value = true;
+    try {
+        const created = await Promise.all(files.map(async (file) => songsApi.create(await file.text())));
+        toast.add({ severity: 'success', summary: `Imported ${created.length} song${created.length === 1 ? '' : 's'}`, life: 2000 });
+        await reload();
+        if (created.length === 1) router.push(`/songs/${created[0].id}`);
+    } catch {
+        toast.add({ severity: 'error', summary: 'Failed to import song', life: 3000 });
+    } finally {
+        importing.value = false;
+    }
+}
+
 function confirmDelete(song: SongSummary) {
     confirm.require({
         message: `Delete "${song.title}"? This cannot be undone.`,
@@ -54,7 +75,11 @@ function confirmDelete(song: SongSummary) {
     <div class="card">
         <Toolbar class="mb-4">
             <template #start>
-                <Button label="New Song" icon="pi pi-plus" as="router-link" to="/songs/new" />
+                <div class="flex gap-2">
+                    <Button label="New Song" icon="pi pi-plus" as="router-link" to="/songs/new" />
+                    <Button label="Import ChordPro" icon="pi pi-upload" severity="secondary" outlined :loading="importing" @click="importInputRef?.click()" />
+                    <input ref="importInputRef" type="file" accept=".cho,.chopro,.crd,.pro,.txt" multiple class="hidden" @change="importFiles">
+                </div>
             </template>
         </Toolbar>
 

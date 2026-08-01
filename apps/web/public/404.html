@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Songbook Editor</title>
+    <script>
+      // GitHub Pages has no server-side SPA fallback, but this app uses real
+      // paths (createWebHistory) - a direct visit/refresh on any route other
+      // than the root (e.g. a shared setlist link) hits GH Pages' static
+      // file server, finds nothing, and lands here. Standard workaround
+      // (rafgraph/spa-github-pages): redirect to the app root, stashing the
+      // real path in a query string that the inline script in index.html
+      // unpacks via history.replaceState before Vue Router ever sees the URL.
+      var pathSegmentsToKeep = 1; // keeps "/songbook-editor-react" from the path below
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

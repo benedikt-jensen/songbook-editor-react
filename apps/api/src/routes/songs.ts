@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
+import { requireAuth } from "../auth";
 
 function extractDirective(content: string, key: string): string | null {
     const pattern = new RegExp(`^\\{${key}:\\s*(.+?)\\s*\\}$`, "i");
@@ -27,17 +28,22 @@ interface SongRow {
     updated_at: string;
 }
 
+// Mounted at /songs in server.ts - router.use() below is scoped to that
+// prefix, not the whole app (see the /share/:token bug this fixed).
 const router = Router();
+router.use(requireAuth);
 
-router.get("/songs", (_req, res) => {
+router.get("/", (req, res) => {
     const rows = db
-        .prepare("SELECT id, title, artist, updated_at FROM songs ORDER BY updated_at DESC")
-        .all();
+        .prepare("SELECT id, title, artist, updated_at FROM songs WHERE user_id = ? ORDER BY updated_at DESC")
+        .all(req.userId);
     res.json(rows);
 });
 
-router.get("/songs/:id", (req, res) => {
-    const row = db.prepare("SELECT * FROM songs WHERE id = ?").get(req.params.id) as SongRow | undefined;
+router.get("/:id", (req, res) => {
+    const row = db
+        .prepare("SELECT * FROM songs WHERE id = ? AND user_id = ?")
+        .get(req.params.id, req.userId) as SongRow | undefined;
     if (!row) {
         res.status(404).json({ error: "Song not found" });
         return;
@@ -45,26 +51,26 @@ router.get("/songs/:id", (req, res) => {
     res.json(row);
 });
 
-router.post("/songs", (req, res) => {
+router.post("/", (req, res) => {
     const content: string = req.body?.content ?? "";
     const title = extractTitle(content);
     const artist = extractArtist(content);
     const now = new Date().toISOString();
     const info = db
-        .prepare("INSERT INTO songs (title, artist, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
-        .run(title, artist, content, now, now);
+        .prepare("INSERT INTO songs (title, artist, content, created_at, updated_at, user_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(title, artist, content, now, now, req.userId);
     const row = db.prepare("SELECT * FROM songs WHERE id = ?").get(info.lastInsertRowid);
     res.status(201).json(row);
 });
 
-router.put("/songs/:id", (req, res) => {
+router.put("/:id", (req, res) => {
     const content: string = req.body?.content ?? "";
     const title = extractTitle(content);
     const artist = extractArtist(content);
     const now = new Date().toISOString();
     const info = db
-        .prepare("UPDATE songs SET title = ?, artist = ?, content = ?, updated_at = ? WHERE id = ?")
-        .run(title, artist, content, now, req.params.id);
+        .prepare("UPDATE songs SET title = ?, artist = ?, content = ?, updated_at = ? WHERE id = ? AND user_id = ?")
+        .run(title, artist, content, now, req.params.id, req.userId);
     if (info.changes === 0) {
         res.status(404).json({ error: "Song not found" });
         return;
@@ -73,8 +79,8 @@ router.put("/songs/:id", (req, res) => {
     res.json(row);
 });
 
-router.delete("/songs/:id", (req, res) => {
-    const info = db.prepare("DELETE FROM songs WHERE id = ?").run(req.params.id);
+router.delete("/:id", (req, res) => {
+    const info = db.prepare("DELETE FROM songs WHERE id = ? AND user_id = ?").run(req.params.id, req.userId);
     if (info.changes === 0) {
         res.status(404).json({ error: "Song not found" });
         return;

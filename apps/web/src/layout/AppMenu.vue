@@ -29,6 +29,17 @@ const model = ref<MenuItem[]>([
                 to: '/songs/new'
             }
         ]
+    },
+    {
+        label: 'Setlists',
+        path: '/setlists',
+        items: [
+            {
+                label: 'All Setlists',
+                icon: 'pi pi-fw pi-list',
+                to: '/setlists'
+            }
+        ]
     }
 ]);
 </script>

@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import pdfRouter from "./routes/pdf";
 import songsRouter from "./routes/songs";
+import authRouter from "./routes/auth";
+import setlistsRouter from "./routes/setlists";
+import shareRouter from "./routes/share";
 import { seedIfEmpty } from "./seed";
 
 const allowedOrigins = [
@@ -26,7 +29,10 @@ app.use(express.json({ limit: "5mb" }));
 seedIfEmpty();
 
 app.use(pdfRouter);
-app.use(songsRouter);
+app.use(authRouter);
+app.use("/songs", songsRouter);
+app.use("/setlists", setlistsRouter);
+app.use(shareRouter);
 
 app.listen(3001, '127.0.0.1', () => {
     console.log("API server running on http://127.0.0.1:3001");

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './apiBase';
+import { apiFetch } from './apiBase';
 import type { Song, SongSummary } from '@/types/song';
 
 // The wire format, as apps/api's sqlite rows come back over JSON (snake_case
@@ -15,49 +15,25 @@ function toSong(raw: RawSong): Song {
     return { ...toSongSummary(raw), content: raw.content, createdAt: raw.created_at };
 }
 
-async function handle<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-        throw new Error(`Songs API request failed: ${response.status} ${response.statusText}`);
-    }
-    return response.json() as Promise<T>;
-}
-
 export const songsApi = {
-    list(): Promise<SongSummary[]> {
-        return fetch(`${API_BASE_URL}/songs`)
-            .then((r) => handle<RawSongSummary[]>(r))
-            .then((rows) => rows.map(toSongSummary));
+    async list(): Promise<SongSummary[]> {
+        const rows = await apiFetch<RawSongSummary[]>('/songs');
+        return rows.map(toSongSummary);
     },
 
-    get(id: number): Promise<Song> {
-        return fetch(`${API_BASE_URL}/songs/${id}`)
-            .then((r) => handle<RawSong>(r))
-            .then(toSong);
+    async get(id: number): Promise<Song> {
+        return toSong(await apiFetch<RawSong>(`/songs/${id}`));
     },
 
-    create(content: string): Promise<Song> {
-        return fetch(`${API_BASE_URL}/songs`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        })
-            .then((r) => handle<RawSong>(r))
-            .then(toSong);
+    async create(content: string): Promise<Song> {
+        return toSong(await apiFetch<RawSong>('/songs', { method: 'POST', body: JSON.stringify({ content }) }));
     },
 
-    update(id: number, content: string): Promise<Song> {
-        return fetch(`${API_BASE_URL}/songs/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        })
-            .then((r) => handle<RawSong>(r))
-            .then(toSong);
+    async update(id: number, content: string): Promise<Song> {
+        return toSong(await apiFetch<RawSong>(`/songs/${id}`, { method: 'PUT', body: JSON.stringify({ content }) }));
     },
 
     remove(id: number): Promise<void> {
-        return fetch(`${API_BASE_URL}/songs/${id}`, { method: 'DELETE' }).then((r) => {
-            if (!r.ok) throw new Error(`Songs API request failed: ${r.status} ${r.statusText}`);
-        });
+        return apiFetch<void>(`/songs/${id}`, { method: 'DELETE' });
     },
 };

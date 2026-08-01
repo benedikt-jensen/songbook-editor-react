@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { useLayout } from '@/layout/composables/layout';
+import { authApi } from '@/services/authApi';
+import { authState } from '@/stores/auth';
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+const router = useRouter();
+
+async function logout() {
+    await authApi.logout();
+    router.push('/login');
+}
 </script>
 
 <template>
@@ -22,6 +31,8 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
             </div>
+            <span v-if="authState.user" class="text-sm text-muted-color mr-2">{{ authState.user.email }}</span>
+            <Button label="Log out" icon="pi pi-sign-out" text size="small" @click="logout" />
         </div>
     </div>
 </template>
