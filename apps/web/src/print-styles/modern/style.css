@@ -27,6 +27,14 @@ body {
 @page {
   size: A4;
   margin: 4mm;
+  /* @page can't be scoped under .song-content-modern the way normal
+     selectors are (it's a page-box rule, not tied to any DOM subtree) - if
+     classic's stylesheet is still injected when this one renders (see the
+     style-switch overlap window documented in PrintPreview.vue), its
+     `border` would otherwise keep applying here too, since nothing would
+     override it. Every style must fully declare `border` itself for the
+     same reason, even to explicitly say "none". */
+  border: none;
   padding: 4mm 4mm;
   padding-top: 0;
   background-color: white;

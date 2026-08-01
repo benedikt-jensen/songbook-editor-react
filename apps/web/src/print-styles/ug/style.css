@@ -29,6 +29,14 @@ body {
 @page {
   size: A4;
   margin: 6mm;
+  /* @page can't be scoped under .song-content-ug the way normal selectors
+     are (it's a page-box rule, not tied to any DOM subtree) - if classic's
+     stylesheet is still injected when this one renders (see the
+     style-switch overlap window documented in PrintPreview.vue), its
+     `border` would otherwise keep applying on the sides below, since
+     nothing would override them. `border: none` resets all four sides
+     first so only the explicit border-top below survives. */
+  border: none;
   border-top: 2mm solid var(--song-primary-color);
   padding: 4mm 4mm;
   background-color: #111111;
