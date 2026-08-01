@@ -28,6 +28,12 @@ app.use(express.json({ limit: "5mb" }));
 
 seedIfEmpty();
 
+// Unauthenticated on purpose - deploy.mjs polls this after a restart to
+// confirm the process actually came back up before declaring success.
+app.get("/health", (_req, res) => {
+    res.json({ status: "ok" });
+});
+
 app.use(pdfRouter);
 app.use(authRouter);
 app.use("/songs", songsRouter);
