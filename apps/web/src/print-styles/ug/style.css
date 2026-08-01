@@ -138,6 +138,16 @@ body {
   border-radius: 0.2em;
   color: var(--song-bg-color);
   background-color: var(--song-primary-color);
+  /* Unlike .song-paragraph/.lyric-line, badges had no fragmentation
+     protection at all. break-inside keeps a badge from being sliced
+     internally; break-after matters more in practice - a lone directive
+     immediately followed by another (e.g. "{part: PC}\n{comment: C}")
+     produces a badge with no lines of its own (see groupIntoBlocks in
+     chordpro/parser.ts), and without break-after paged.js is free to wedge
+     just that bare badge into whatever sliver of space is left at a page's
+     bottom edge instead of carrying it over with the content it belongs to. */
+  break-inside: avoid;
+  break-after: avoid;
 }
 
 .song-content-ug .paragraph-badge {

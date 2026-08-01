@@ -10,6 +10,8 @@ const props = defineProps<{
     template: Component;
     /** Raw CSS for the paged.js buffer - see styles/printStyles.ts for the available choices. */
     css: string;
+    /** Badge shown in the top-left corner; omitted entirely when unset. */
+    songNumber?: number;
 }>();
 
 const emit = defineEmits<{
@@ -108,7 +110,7 @@ const runPagination = async () => {
             // then the page reflows once the real font swaps in, leaving content
             // positioned outside the page boundaries paged.js already committed to.
             await document.fonts.ready;
-            const html = await renderSongHtml(props.text, props.template);
+            const html = await renderSongHtml(props.text, props.template, props.songNumber);
 
             const buffer = document.createElement('div');
             buffer.style.position = 'absolute';
@@ -157,7 +159,7 @@ const runPagination = async () => {
 
 let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
 watch(
-    [() => props.text, () => props.css, () => props.template],
+    [() => props.text, () => props.css, () => props.template, () => props.songNumber],
     () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -180,6 +182,15 @@ onMounted(() => {
 onUnmounted(() => {
     clearTimeout(debounceTimeout);
     window.removeEventListener('resize', rescale);
+    // activeBuffer lives in document.body and previewer's polisher injects
+    // <style> tags into document.head - both outside Vue's own DOM tree, so
+    // unmounting this component doesn't clean either up on its own. Without
+    // this, every song opened in a session (SongEditorView mounts this too)
+    // leaves its buffer and stylesheet behind permanently: they pile up
+    // across navigations and can interfere with a later run's fragmentation
+    // (e.g. a stale rule matching the same selector a newer stylesheet uses).
+    activeBuffer?.remove();
+    previewer?.polisher?.destroy();
 });
 </script>
 

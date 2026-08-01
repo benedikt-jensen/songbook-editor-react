@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { setlistsApi, type Setlist, type SetlistSong } from '@/services/setlistsApi';
 import { songsApi } from '@/services/songsApi';
 import type { SongSummary } from '@/types/song';
 import { renderSongHtml } from '@/chordpro/renderToHtml';
-import { downloadPdfFromHtml } from '@/services/pdfService';
+import { generatePdfBytes, downloadBytes } from '@/services/pdfService';
 import { printStyles, defaultPrintStyleId } from '@/print-styles/registry';
+import PrintPreview from '@/components/editor/PrintPreview.vue';
+import type { Song } from '@/types/song';
+import { PDFDocument } from 'pdf-lib';
 
 const route = useRoute();
 const router = useRouter();
@@ -139,40 +142,136 @@ const selectedStyleId = ref(defaultPrintStyleId);
 const selectedStyle = computed(() => printStyles.find((s) => s.id === selectedStyleId.value) ?? printStyles[0]);
 const printingPdf = ref(false);
 
-// One PDF for the whole setlist: render every song with the same print
-// style (numbered by its position, matching the list above), then
-// concatenate the rendered pages into a single HTML document - paged.js
-// (invoked server-side, same as a single song's export) paginates that
-// whole document, forcing a fresh page per song via the `break-before: page`
-// rule below rather than letting songs run together mid-page.
+// Forcing paged.js to fragment several songs across a page break within one
+// pagination run turned out to be unreliable - both the live Previewer API
+// and the server-side polyfill script would sometimes let one song's tail
+// share a page with the next song's head regardless of a break-before
+// class, a break-after marker, or which one of preview/PDF was being
+// generated. Every song's OWN pagination is solid on its own (it's the same
+// path SongEditorView uses), so both PDF export and the preview below
+// process one song at a time instead of asking paged.js to fragment a
+// multi-song document.
+
+async function buildSingleSongHtmlDoc(song: Song, songNumber: number): Promise<string> {
+    const page = await renderSongHtml(song.content, selectedStyle.value.template, songNumber);
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>${song.title}</title>
+          <style>${selectedStyle.value.css}</style>
+          <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        </head>
+        <body>${page}</body>
+        </html>
+    `;
+}
+
+// Generates each song's PDF individually (server-side, one puppeteer run
+// per song - kept sequential rather than parallel so a setlist doesn't
+// spin up many browser instances on the api at once) and merges the
+// resulting documents into one file with pdf-lib.
 async function downloadSetlistPdf() {
     if (!setlist.value || setlist.value.songs.length === 0) return;
     printingPdf.value = true;
     try {
         const songs = await Promise.all(setlist.value.songs.map((s) => songsApi.get(s.songId)));
-        const pages = await Promise.all(songs.map((song, index) => renderSongHtml(song.content, selectedStyle.value.template, index + 1)));
-        const html = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-              <meta charset="UTF-8">
-              <title>${setlist.value.name}</title>
-              <style>
-                ${selectedStyle.value.css}
-                .setlist-song + .setlist-song { break-before: page; }
-              </style>
-              <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-            </head>
-            <body>
-                ${pages.map((page) => `<div class="setlist-song">${page}</div>`).join('')}
-            </body>
-            </html>
-        `;
-        await downloadPdfFromHtml(html, `${setlist.value.name}.pdf`);
+        const merged = await PDFDocument.create();
+        for (const [index, song] of songs.entries()) {
+            const html = await buildSingleSongHtmlDoc(song, index + 1);
+            const bytes = await generatePdfBytes(html);
+            const doc = await PDFDocument.load(bytes);
+            const copiedPages = await merged.copyPages(doc, doc.getPageIndices());
+            copiedPages.forEach((p) => merged.addPage(p));
+        }
+        downloadBytes(await merged.save(), `${setlist.value.name}.pdf`);
     } catch {
         toast.add({ severity: 'error', summary: 'Failed to generate PDF', life: 3000 });
     } finally {
         printingPdf.value = false;
+    }
+}
+
+const previewOpen = ref(false);
+const previewLoading = ref(false);
+const previewSongs = ref<Song[]>([]);
+const previewSongIndex = ref(0);
+const previewLocalPage = ref(0);
+const previewSongPageCount = ref(0);
+// Indexed by song index - populated as PrintPreview paginates each song, so
+// navigating back to an already-visited song can jump straight to its last
+// page without waiting for it to re-paginate.
+const previewPageCounts = ref<number[]>([]);
+const previewCurrentSong = computed<Song | null>(() => previewSongs.value[previewSongIndex.value] ?? null);
+
+// Tracks the rendered page preview's own width so the nav row above it can be
+// clamped to the same width - the dialog itself is much wider (90vw) than the
+// height-constrained (aspect-ratio) page box, so without this the nav buttons
+// would sit far out past the page's edges instead of framing it.
+const previewPageBoxRef = ref<HTMLDivElement | null>(null);
+const previewNavWidth = ref<number | null>(null);
+let previewPageBoxObserver: ResizeObserver | null = null;
+watch(previewPageBoxRef, (el) => {
+    previewPageBoxObserver?.disconnect();
+    previewPageBoxObserver = null;
+    if (el) {
+        previewPageBoxObserver = new ResizeObserver((entries) => {
+            previewNavWidth.value = entries[0].contentRect.width;
+        });
+        previewPageBoxObserver.observe(el);
+    } else {
+        previewNavWidth.value = null;
+    }
+});
+onUnmounted(() => previewPageBoxObserver?.disconnect());
+const isFirstPreviewPage = computed(() => previewSongIndex.value === 0 && previewLocalPage.value === 0);
+const isLastPreviewPage = computed(
+    () => previewSongIndex.value === previewSongs.value.length - 1 && previewLocalPage.value >= previewSongPageCount.value - 1,
+);
+
+async function openPreview() {
+    if (!setlist.value || setlist.value.songs.length === 0) return;
+    previewOpen.value = true;
+    previewLoading.value = true;
+    previewSongIndex.value = 0;
+    previewLocalPage.value = 0;
+    previewPageCounts.value = [];
+    try {
+        previewSongs.value = await Promise.all(setlist.value.songs.map((s) => songsApi.get(s.songId)));
+    } catch {
+        toast.add({ severity: 'error', summary: 'Failed to build preview', life: 3000 });
+        previewOpen.value = false;
+    } finally {
+        previewLoading.value = false;
+    }
+}
+
+function onPreviewPageCount(count: number) {
+    previewSongPageCount.value = count;
+    previewPageCounts.value[previewSongIndex.value] = count;
+}
+
+function previewNextPage() {
+    if (previewLocalPage.value < previewSongPageCount.value - 1) {
+        previewLocalPage.value++;
+    } else if (previewSongIndex.value < previewSongs.value.length - 1) {
+        previewSongIndex.value++;
+        previewLocalPage.value = 0;
+        previewSongPageCount.value = previewPageCounts.value[previewSongIndex.value] ?? 0;
+    }
+}
+
+function previewPrevPage() {
+    if (previewLocalPage.value > 0) {
+        previewLocalPage.value--;
+    } else if (previewSongIndex.value > 0) {
+        previewSongIndex.value--;
+        // The previous song was already paginated on the way forward, so its
+        // page count is cached - land on its actual last page rather than page 1.
+        const cachedCount = previewPageCounts.value[previewSongIndex.value];
+        previewSongPageCount.value = cachedCount ?? 0;
+        previewLocalPage.value = cachedCount ? cachedCount - 1 : 0;
     }
 }
 </script>
@@ -198,6 +297,14 @@ async function downloadSetlistPdf() {
                 <Button label="Add songs" icon="pi pi-plus" outlined @click="openAddDialog" />
                 <Button label="Share" icon="pi pi-share-alt" severity="secondary" :loading="sharing" @click="generateShareLink" />
                 <Select v-model="selectedStyleId" :options="printStyles" option-label="label" option-value="id" size="small" />
+                <Button
+                    label="Preview"
+                    icon="pi pi-eye"
+                    severity="secondary"
+                    outlined
+                    :disabled="setlist.songs.length === 0"
+                    @click="openPreview"
+                />
                 <Button
                     label="Print PDF"
                     icon="pi pi-print"
@@ -257,6 +364,40 @@ async function downloadSetlistPdf() {
                 <i v-else class="pi pi-check text-primary"></i>
             </li>
         </ul>
+    </Dialog>
+
+    <Dialog v-model:visible="previewOpen" header="Setlist preview" modal :style="{ width: '90vw' }">
+        <div class="h-[80vh] flex flex-col gap-3">
+            <ProgressSpinner v-if="previewLoading" class="m-auto" style="width: 2rem; height: 2rem" />
+            <template v-else-if="previewCurrentSong">
+                <div
+                    class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 mx-auto w-full"
+                    :style="previewNavWidth ? { maxWidth: `${previewNavWidth}px` } : undefined"
+                >
+                    <Button icon="pi pi-angle-left" aria-label="Previous page" text rounded size="small" :disabled="isFirstPreviewPage" @click="previewPrevPage" />
+                    <span class="text-sm text-center truncate">
+                        {{ previewCurrentSong.title }} - Page {{ previewLocalPage + 1 }} of {{ Math.max(previewSongPageCount, 1) }}
+                        <span class="text-muted-color">(song {{ previewSongIndex + 1 }} of {{ previewSongs.length }})</span>
+                    </span>
+                    <Button icon="pi pi-angle-right" aria-label="Next page" text rounded size="small" class="justify-self-end" :disabled="isLastPreviewPage" @click="previewNextPage" />
+                </div>
+                <div class="flex-1 min-h-0 flex items-center justify-center">
+                    <div ref="previewPageBoxRef" class="flex flex-col aspect-[210/297] h-full max-w-full border border-surface-300 dark:border-surface-700 rounded overflow-hidden">
+                        <PrintPreview
+                            :text="previewCurrentSong.content"
+                            :template="selectedStyle.template"
+                            :css="selectedStyle.css"
+                            :song-number="previewSongIndex + 1"
+                            :current-page="previewLocalPage"
+                            @update:page-count="onPreviewPageCount"
+                        />
+                    </div>
+                </div>
+            </template>
+        </div>
+        <template #footer>
+            <Button label="Print PDF" icon="pi pi-print" :loading="printingPdf" @click="downloadSetlistPdf" />
+        </template>
     </Dialog>
 
     <Toast />

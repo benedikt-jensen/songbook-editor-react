@@ -10,7 +10,6 @@ import { renderToString } from 'vue/server-renderer';
  * way JSX would, so no manual HTML-escaping is needed here.
  */
 export function renderSongHtml(text: string, template: Component, songNumber?: number): Promise<string> {
-    songNumber ??= 48; // set this to 47 as default for preview purposes
     const app = createSSRApp(() => h(template, { text, songNumber }));
     return renderToString(app);
 }
