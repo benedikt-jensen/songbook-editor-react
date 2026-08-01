@@ -5,6 +5,9 @@ import { useToast } from 'primevue/usetoast';
 import { setlistsApi, type Setlist, type SetlistSong } from '@/services/setlistsApi';
 import { songsApi } from '@/services/songsApi';
 import type { SongSummary } from '@/types/song';
+import { renderSongHtml } from '@/chordpro/renderToHtml';
+import { downloadPdfFromHtml } from '@/services/pdfService';
+import { printStyles, defaultPrintStyleId } from '@/print-styles/registry';
 
 const route = useRoute();
 const router = useRouter();
@@ -131,6 +134,47 @@ async function copyShareLink() {
     await navigator.clipboard.writeText(shareUrl.value);
     toast.add({ severity: 'success', summary: 'Link copied', life: 2000 });
 }
+
+const selectedStyleId = ref(defaultPrintStyleId);
+const selectedStyle = computed(() => printStyles.find((s) => s.id === selectedStyleId.value) ?? printStyles[0]);
+const printingPdf = ref(false);
+
+// One PDF for the whole setlist: render every song with the same print
+// style (numbered by its position, matching the list above), then
+// concatenate the rendered pages into a single HTML document - paged.js
+// (invoked server-side, same as a single song's export) paginates that
+// whole document, forcing a fresh page per song via the `break-before: page`
+// rule below rather than letting songs run together mid-page.
+async function downloadSetlistPdf() {
+    if (!setlist.value || setlist.value.songs.length === 0) return;
+    printingPdf.value = true;
+    try {
+        const songs = await Promise.all(setlist.value.songs.map((s) => songsApi.get(s.songId)));
+        const pages = await Promise.all(songs.map((song, index) => renderSongHtml(song.content, selectedStyle.value.template, index + 1)));
+        const html = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <title>${setlist.value.name}</title>
+              <style>
+                ${selectedStyle.value.css}
+                .setlist-song + .setlist-song { break-before: page; }
+              </style>
+              <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+            </head>
+            <body>
+                ${pages.map((page) => `<div class="setlist-song">${page}</div>`).join('')}
+            </body>
+            </html>
+        `;
+        await downloadPdfFromHtml(html, `${setlist.value.name}.pdf`);
+    } catch {
+        toast.add({ severity: 'error', summary: 'Failed to generate PDF', life: 3000 });
+    } finally {
+        printingPdf.value = false;
+    }
+}
 </script>
 
 <template>
@@ -150,9 +194,19 @@ async function copyShareLink() {
                 <Button icon="pi pi-pencil" aria-label="Rename setlist" text rounded size="small" @click="startRename" />
             </h1>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
                 <Button label="Add songs" icon="pi pi-plus" outlined @click="openAddDialog" />
                 <Button label="Share" icon="pi pi-share-alt" severity="secondary" :loading="sharing" @click="generateShareLink" />
+                <Select v-model="selectedStyleId" :options="printStyles" option-label="label" option-value="id" size="small" />
+                <Button
+                    label="Print PDF"
+                    icon="pi pi-print"
+                    severity="secondary"
+                    outlined
+                    :loading="printingPdf"
+                    :disabled="setlist.songs.length === 0"
+                    @click="downloadSetlistPdf"
+                />
             </div>
         </div>
 

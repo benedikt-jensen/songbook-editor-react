@@ -82,7 +82,7 @@ body {
 @page {
   size: A4;
   margin: 6mm;
-  border: 0.15em solid var(--song-primary-color);
+  border: 1mm solid var(--song-primary-color);
   padding: 4mm 4mm;
   background-color: white;
 }

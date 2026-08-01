@@ -4,8 +4,8 @@
   "main": "pdf-server.js",
   "scripts": {
     "build": "tsc && node -e \"require('fs').cpSync('src/seed-data','dist/seed-data',{recursive:true})\"",
-    "start": "npx puppeteer browsers install chrome && node dist/server.js",
-    "start:win": "cross-env PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" node dist/server.js",
+    "start": "npm run build && npx puppeteer browsers install chrome && node dist/server.js",
+    "start:win": "npm run build && cross-env PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" node dist/server.js",
     "deploy": "node scripts/deploy.mjs"
   },
   "keywords": [],
