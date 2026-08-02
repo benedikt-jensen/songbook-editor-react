@@ -138,16 +138,10 @@ body {
   border-radius: 0.2em;
   color: var(--song-bg-color);
   background-color: var(--song-primary-color);
-  /* Unlike .song-paragraph/.lyric-line, badges had no fragmentation
-     protection at all. break-inside keeps a badge from being sliced
-     internally; break-after matters more in practice - a lone directive
-     immediately followed by another (e.g. "{part: PC}\n{comment: C}")
-     produces a badge with no lines of its own (see groupIntoBlocks in
-     chordpro/parser.ts), and without break-after paged.js is free to wedge
-     just that bare badge into whatever sliver of space is left at a page's
-     bottom edge instead of carrying it over with the content it belongs to. */
+  /* Keeps a badge from being sliced internally - doesn't affect whether the
+     page break lands before or after it, so it's safe for every badge kind
+     including a standalone .part-badge, unlike break-after below. */
   break-inside: avoid;
-  break-after: avoid;
 }
 
 .song-content-ug .paragraph-badge {
@@ -162,6 +156,17 @@ body {
   text-transform: uppercase;
   color: var(--song-bg-color);
   background-color: var(--song-primary-color);
+  /* A section/comment badge with no lines of its own (e.g. "{comment: C}"
+     immediately followed by another directive, see groupIntoBlocks in
+     chordpro/parser.ts) has nothing else tying it to the paragraph content
+     that follows - without break-after, paged.js is free to wedge just the
+     badge into whatever sliver of space is left at a page's bottom edge
+     instead of carrying it over with the content it belongs to. A
+     .part-badge doesn't need this: it's a standalone repeat/reference marker
+     with no following content of its own to protect, so gluing it to
+     whatever happens to come next in the document only forces it (and that
+     unrelated content) onto the next page even when it would fit by itself. */
+  break-after: avoid;
 }
 
 .song-content-ug .part-badge {
