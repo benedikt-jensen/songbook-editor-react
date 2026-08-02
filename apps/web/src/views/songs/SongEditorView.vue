@@ -2,15 +2,12 @@
 import { ref, computed, onMounted, onUnmounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
-import { EditorView } from '@codemirror/view';
-import { Annotation, EditorState, type Extension } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
+import { Main as AceEditorMain } from 'chordproject-editor';
 import PrintPreview from '@/components/editor/PrintPreview.vue';
 import { songsApi } from '@/services/songsApi';
 import { downloadPdfFromHtml } from '@/services/pdfService';
 import { renderSongHtml } from '@/chordpro/renderToHtml';
 import { getTitle } from '@/chordpro/parser';
-import { moveChord } from '@/chordpro/chordPlacement';
 import { transposeChordProText } from '@/chordpro/transpose';
 import { printStyles, defaultPrintStyleId } from '@/print-styles/registry';
 
@@ -116,70 +113,47 @@ function transpose(semitones: number) {
 }
 
 const editorRef = ref<HTMLDivElement | null>(null);
-let view: EditorView | null = null;
-
-// Tags transactions we dispatch ourselves (see the external-sync watch below)
-// so the updateListener can tell "song loaded/switched" apart from real
-// keystrokes, instead of marking every song dirty the instant it opens.
-const externalSync = Annotation.define<boolean>();
+let aceEditor: ReturnType<typeof AceEditorMain.getEditor> | null = null;
+// Set right before we push text into Ace ourselves (loading/switching a
+// song) so the change listener below can tell that apart from a real
+// keystroke, instead of marking every song dirty the instant it opens.
+let isExternalSync = false;
 
 onMounted(() => {
     if (!editorRef.value) return;
 
-    const updateListener: Extension = EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-            text.value = update.state.doc.toString();
-            currentPage.value = 0;
-            if (!update.transactions.some((tr) => tr.annotation(externalSync))) {
-                dirty.value = true;
-            }
-        }
-    });
+    // chordproject-editor is a thin Ace wrapper bound to a hardcoded DOM id
+    // (see Settings.ids.editor / the container's id="chordProjectEditor"
+    // below) rather than taking an element reference - only one instance can
+    // exist at a time, which matches this view (a single full-page editor).
+    AceEditorMain.init();
+    aceEditor = AceEditorMain.getEditor();
+    isExternalSync = true;
+    aceEditor.setValue(text.value, -1);
+    isExternalSync = false;
 
-    const startState = EditorState.create({
-        doc: text.value,
-        extensions: [basicSetup, updateListener],
-    });
-
-    view = new EditorView({
-        state: startState,
-        parent: editorRef.value,
+    aceEditor.session.on('change', () => {
+        if (isExternalSync || !aceEditor) return;
+        text.value = aceEditor.getValue();
+        currentPage.value = 0;
+        dirty.value = true;
     });
 });
 
 onUnmounted(() => {
-    view?.destroy();
-    view = null;
+    aceEditor?.destroy();
+    aceEditor = null;
 });
 
-// Integration point for the future visual/drag chord editor: moves the
-// `chordIndex`-th chord on 1-based document line `lineNumber` to `toOffset`
-// in that line's lyric text, via a precise CodeMirror range replacement
-// (not a full-document swap - see the external-sync watch above for why that
-// matters: it keeps cursor position, scroll and undo history intact). The
-// resulting doc change flows back into `text` through the updateListener
-// above, exactly like a keystroke would. Exposed so a future drag handler -
-// wherever it ends up living - can invoke it through a template ref.
-function moveChordOnLine(lineNumber: number, chordIndex: number, toOffset: number) {
-    if (!view) return;
-    const line = view.state.doc.line(lineNumber);
-    const newLineText = moveChord(line.text, chordIndex, toOffset);
-    view.dispatch({ changes: { from: line.from, to: line.to, insert: newLineText } });
-}
-
-defineExpose({ moveChordOnLine });
-
-// Pushes externally-set text (loading a song, switching songs) into CodeMirror.
-// User keystrokes already flow the other way via the updateListener above, so
-// this only fires when the two are out of sync.
+// Pushes externally-set text (loading a song, switching songs) into Ace.
+// User keystrokes already flow the other way via the change listener above,
+// so this only fires when the two are out of sync.
 watch(text, (value) => {
-    if (!view) return;
-    const currentText = view.state.doc.toString();
-    if (currentText !== value) {
-        view.dispatch({
-            changes: { from: 0, to: currentText.length, insert: value },
-            annotations: externalSync.of(true),
-        });
+    if (!aceEditor) return;
+    if (aceEditor.getValue() !== value) {
+        isExternalSync = true;
+        aceEditor.setValue(value, -1);
+        isExternalSync = false;
     }
 });
 
@@ -210,7 +184,7 @@ onBeforeRouteLeave(() => {
                 <span v-else-if="dirty" class="text-sm text-muted-color">Unsaved changes</span>
             </div>
             <div class="flex-1 border border-surface-300 dark:border-surface-700 rounded overflow-auto">
-                <div ref="editorRef" />
+                <div id="chordProjectEditor" ref="editorRef" class="h-full w-full" />
             </div>
             <div class="flex gap-2 mt-2">
                 <Button label="Save" icon="pi pi-save" :loading="saving" :disabled="loading" @click="save" />

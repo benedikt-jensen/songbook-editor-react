@@ -1,29 +1,36 @@
 {title: JAHWE}
-{artist: Ps.104; 2.Mo.3,13-14; Phil.2,10-11}
+{subtitle: Ps.104; 2.Mo.3,13-14; Phil.2,10-11}
 
-{comment: V1}
+{start_of_verse: Verse 1}
 Jah[C]we, Er [D/F#]lebt für [Em]immer,
 [G/H]   Er herrscht mit Liebe und Kr[G]aft.  [Am7]
 Die W[C]elt muss s[D/F#]ich nun b[E]eugen,
 denn [Am]er ist erh[G/H]oben.[C   D]
+{end_of_verse}
 
-{comment: PC}
+{start_of_verse: Pre-Chorus}
 Wir s[Em]eh'n auf Jah[C]we, Jah[G]we.  [D/F#]
 Für [Em]immer Jah[C]we, Jah[D]we.
+{end_of_verse}
 
-{comment: V2}
+{start_of_verse: Verse 2}
 Denn [C]Er ist [D/F#]unsre H[Em]offnung,
 [G/H]  Er li[C]ebt, wie keiner es t[G]ut.  [Am7]
 Erh[C]ebt den [D/F#]Gott des [Em]Himmels,
 [Am7]gebt Ihm die [G/H]Ehre.    [C]        [D]
-{part: PC}
-{comment: C}
+{end_of_verse}
+
+{x_part: PC}
+
+{start_of_chorus} 
 (Denn) [G]Er regiert für immer,
 [D]Er regiert für immer,
 [Am7]Er re[Em]giert, für[C] immer und[D] ewig.
 Denn [G]Er regiert für immer,
 [D]Er regiert für immer,
 [Am7]Er reg[Em]iert, für[C] immer und[D] ewig, Jah[G]we.
-{part: PC}
-{part: C}
-{footnote: Originaltitel Yahweh | T&M Reuben Morgan | Dt. Text Melina Lörracher | © 2009 Hillsong Music Publishing | Für D, A, CH: CopyCare Deutschland, 71087 Holzgerlingen}
+{end_of_chorus}
+
+{x_part: PC}
+{x_part: C}
+{copyright: Originaltitel Yahweh | T&M Reuben Morgan | Dt. Text Melina Lörracher | © 2009 Hillsong Music Publishing | Für D, A, CH: CopyCare Deutschland, 71087 Holzgerlingen}

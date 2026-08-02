@@ -21,6 +21,7 @@ const song = computed(() => groupIntoBlocks(parseChordPro(props.text)));
 
         <h2 v-if="song.title" id="song-title" class="song-title">{{ song.title }}</h2>
         <h4 v-if="song.artist">{{ song.artist }}</h4>
+        <h4 v-if="song.subtitle">{{ song.subtitle }}</h4>
 
         <div class="song-body">
             <template v-for="(block, blockIndex) in song.blocks" :key="blockIndex">
@@ -28,8 +29,8 @@ const song = computed(() => groupIntoBlocks(parseChordPro(props.text)));
                     <div class="center">{{ block.badge.value }}</div>
                 </div>
 
-                <div v-if="block.lines.length > 0 || block.badge?.type === 'comment'" class="song-paragraph">
-                    <div v-if="block.badge?.type === 'comment'" class="badge paragraph-badge">
+                <div v-if="block.lines.length > 0 || (block.badge && block.badge.type !== 'part')" class="song-paragraph">
+                    <div v-if="block.badge && block.badge.type !== 'part'" class="badge paragraph-badge">
                         <div class="center">{{ block.badge.value }}</div>
                     </div>
 

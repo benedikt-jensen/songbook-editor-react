@@ -177,7 +177,7 @@ body {
   bottom: 0;
   padding: 0;
   margin: -3mm;
-  font-size: 0.52em;
+  font-size: 0.42em;
   color: #666;
 }
 
@@ -191,6 +191,7 @@ body {
 .song-content-modern h4 {
   margin-top: 0;
   margin-bottom: 0.3em;
+  padding-inline: 0.5em;
   text-align: left;
   font-size: 0.9em;
   font-style: italic;
